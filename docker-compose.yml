@@ -1,0 +1,109 @@
+services:
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  # MySQL Exporter - Collects MySQL metrics
+  mysqld-exporter:
+    image: prom/mysqld-exporter:v0.14.0
+    container_name: mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=exporter:exporter_password@tcp(host.docker.internal:3307)/
+    ports:
+      - "9104:9104"
+    command:
+      - '--collect.perf_schema.eventsstatements'
+      - '--collect.perf_schema.eventsstatements.digest_text_limit=120'
+      - '--collect.perf_schema.eventsstatements.limit=250'
+      - '--collect.perf_schema.eventsstatements.timelimit=86400'
+      - '--collect.global_status'
+      - '--collect.global_variables'
+      - '--collect.slave_status'
+      - '--collect.perf_schema.tablelocks'
+      - '--collect.perf_schema.file_events'
+      - '--collect.info_schema.innodb_metrics'
+    networks:
+      - monitoring
+    restart: unless-stopped
+  # MSSQL Exporter - Collects MSSQL metrics
+  mssql-exporter:
+      image: awaragi/prometheus-mssql-exporter:v1.3.0
+      container_name: mssql-exporter
+      environment:
+        - SERVER=10.30.3.4
+        - PORT=1433
+        - USERNAME=exporter
+        - PASSWORD=appDev@170122
+        - ENCRYPT=false
+        - TRUST_SERVER_CERTIFICATE=true
+        # Optional:
+        - DEBUG=app
+      ports:
+        - "4000:4000"          # <-- correct port for this image
+      networks:
+        - monitoring
+      restart: unless-stopped
+  # Grafana - Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Apache Exporter - Monitors your existing ci3_php8_app_82 container
+  apache-exporter:
+    image: lusotycoon/apache-exporter:latest
+    container_name: apache-exporter
+    command:
+      - '--scrape_uri=http://ci3_php8_app_82:80/server-status?auto'
+    ports:
+      - "9117:9117"
+    networks:
+      - monitoring
+      - ci3_network  # Connect to your PHP app's network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+networks:
+  monitoring:
+    driver: bridge
+  ci3_network:
+    external: true
+
+
+volumes:
+  prometheus-data:
+  grafana-data:

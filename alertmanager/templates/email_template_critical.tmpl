@@ -1,0 +1,451 @@
+{{ define "email.critical.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header .status {
+            font-size: 18px;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .alert-summary {
+            background-color: #fff3cd;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+        .alert-summary h2 {
+            margin: 0 0 15px 0;
+            color: #721c24;
+            font-size: 22px;
+        }
+        .alert-summary p {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h3 {
+            color: #dc3545;
+            border-bottom: 2px solid #dc3545;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+        .info-value {
+            color: #333;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-critical {
+            background-color: #dc3545;
+            color: white;
+        }
+        .badge-warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .badge-firing {
+            background-color: #dc3545;
+            color: white;
+        }
+        .badge-resolved {
+            background-color: #28a745;
+            color: white;
+        }
+        .root-cause {
+            background-color: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .root-cause h4 {
+            margin: 0 0 15px 0;
+            color: #dc3545;
+            font-size: 18px;
+        }
+        .root-cause ul {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        .root-cause li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        .actions {
+            background-color: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .actions h4 {
+            margin: 0 0 15px 0;
+            color: #0066cc;
+            font-size: 18px;
+        }
+        .actions ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        .actions li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .alert-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        .links {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 10px 10px 0;
+            background-color: #dc3545;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .button:hover {
+            background-color: #c82333;
+        }
+        .button-secondary {
+            background-color: #6c757d;
+        }
+        .button-secondary:hover {
+            background-color: #5a6268;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚨 CRITICAL ALERT</h1>
+            <div class="status">{{ .CommonLabels.alertname }}</div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Alert Summary -->
+            <div class="alert-summary">
+                <h2>Alert Summary</h2>
+                <p><strong>{{ .CommonAnnotations.summary }}</strong></p>
+                <p>{{ .CommonAnnotations.description }}</p>
+                <p class="timestamp">
+                    <strong>Fired At:</strong> {{ range .Alerts }}{{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+                </p>
+            </div>
+
+            <!-- Alert Information -->
+            <div class="section">
+                <h3>📋 Alert Information</h3>
+                <div class="info-grid">
+                    <div class="info-label">Status:</div>
+                    <div class="info-value">
+                        {{ if eq .Status "firing" }}
+                            <span class="badge badge-firing">FIRING</span>
+                        {{ else }}
+                            <span class="badge badge-resolved">RESOLVED</span>
+                        {{ end }}
+                    </div>
+
+                    <div class="info-label">Severity:</div>
+                    <div class="info-value">
+                        <span class="badge badge-critical">CRITICAL</span>
+                    </div>
+
+                    <div class="info-label">Team:</div>
+                    <div class="info-value">{{ .CommonLabels.team }}</div>
+
+                    <div class="info-label">Environment:</div>
+                    <div class="info-value">{{ .CommonLabels.environment }}</div>
+
+                    {{ if .CommonLabels.application }}
+                    <div class="info-label">Application:</div>
+                    <div class="info-value">{{ .CommonLabels.application }}</div>
+                    {{ end }}
+
+                    {{ if .CommonLabels.instance }}
+                    <div class="info-label">Instance:</div>
+                    <div class="info-value">{{ .CommonLabels.instance }}</div>
+                    {{ end }}
+
+                    {{ if .CommonLabels.ip }}
+                    <div class="info-label">IP Address:</div>
+                    <div class="info-value">{{ .CommonLabels.ip }}</div>
+                    {{ end }}
+
+                    {{ if .CommonLabels.database }}
+                    <div class="info-label">Database:</div>
+                    <div class="info-value">{{ .CommonLabels.database }}</div>
+                    {{ end }}
+
+                    <div class="info-label">Affected Systems:</div>
+                    <div class="info-value">{{ .Alerts | len }} instance(s)</div>
+                </div>
+            </div>
+
+            <!-- Root Cause Analysis -->
+            <div class="root-cause">
+                <h4>🔍 Root Cause Analysis</h4>
+                <p><strong>Alert Type:</strong> {{ .CommonLabels.alertname }}</p>
+                
+                {{ if eq .CommonLabels.alertname "HighErrorRate" }}
+                <ul>
+                    <li><strong>Issue:</strong> Application is experiencing high error rate (>5% of requests failing with 5xx errors)</li>
+                    <li><strong>Impact:</strong> Users are experiencing service degradation or failures</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Database connection issues or query timeouts</li>
+                            <li>Dependency service failures (external APIs, microservices)</li>
+                            <li>Application bugs introduced in recent deployment</li>
+                            <li>Resource exhaustion (memory leaks, CPU throttling)</li>
+                            <li>Invalid input data causing unhandled exceptions</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else if eq .CommonLabels.alertname "HighLatency" }}
+                <ul>
+                    <li><strong>Issue:</strong> P99 latency exceeds acceptable threshold (>1 second)</li>
+                    <li><strong>Impact:</strong> Poor user experience, potential timeouts</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Database slow queries or missing indexes</li>
+                            <li>High CPU/Memory usage causing processing delays</li>
+                            <li>Network latency to dependencies or databases</li>
+                            <li>Inefficient code paths or N+1 query problems</li>
+                            <li>Cache misses or cache warming issues</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else if eq .CommonLabels.alertname "ServiceDown" }}
+                <ul>
+                    <li><strong>Issue:</strong> Service is completely unresponsive</li>
+                    <li><strong>Impact:</strong> Complete service outage for users</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Application crash or panic</li>
+                            <li>Container/pod restart loop</li>
+                            <li>Infrastructure failure (server down, network issue)</li>
+                            <li>OOM (Out of Memory) kill</li>
+                            <li>Configuration error after deployment</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else if eq .CommonLabels.alertname "MySQLDatabaseDown" }}
+                <ul>
+                    <li><strong>Issue:</strong> MySQL database is not responding</li>
+                    <li><strong>Impact:</strong> All database-dependent services are affected</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>MySQL process crashed or killed</li>
+                            <li>Disk space full preventing MySQL startup</li>
+                            <li>Max connections exceeded causing shutdown</li>
+                            <li>Corrupted data files requiring recovery</li>
+                            <li>Network connectivity issues to database server</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else if eq .CommonLabels.alertname "MySQLHighConnectionUsage" }}
+                <ul>
+                    <li><strong>Issue:</strong> MySQL connection pool usage >90%</li>
+                    <li><strong>Impact:</strong> New connections will be rejected, service degradation</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Connection leaks in application code</li>
+                            <li>Long-running queries holding connections</li>
+                            <li>Traffic spike exceeding expected load</li>
+                            <li>max_connections setting too low</li>
+                            <li>Connection pool misconfiguration in application</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else if eq .CommonLabels.alertname "WindowsHighCPU" }}
+                <ul>
+                    <li><strong>Issue:</strong> CPU usage >90% on Windows server</li>
+                    <li><strong>Impact:</strong> Slow application performance, potential timeouts</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Runaway process consuming CPU</li>
+                            <li>Insufficient server capacity for load</li>
+                            <li>Inefficient application code causing high CPU</li>
+                            <li>Windows updates running in background</li>
+                            <li>Malware or security issues</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else if eq .CommonLabels.alertname "WindowsHighMemory" }}
+                <ul>
+                    <li><strong>Issue:</strong> Memory usage >90% on Windows server</li>
+                    <li><strong>Impact:</strong> Risk of OOM, application crashes, swapping</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Memory leak in application</li>
+                            <li>Large dataset loaded into memory</li>
+                            <li>Insufficient RAM for workload</li>
+                            <li>Memory cache not properly configured</li>
+                            <li>Too many services running simultaneously</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else if eq .CommonLabels.alertname "SLOViolationAvailability" }}
+                <ul>
+                    <li><strong>Issue:</strong> Availability SLO <99.9% - SLA breach imminent</li>
+                    <li><strong>Impact:</strong> Customer SLA violation, potential financial penalties</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Cumulative effect of multiple smaller incidents</li>
+                            <li>Single large outage consuming error budget</li>
+                            <li>Increased error rate across multiple services</li>
+                            <li>Infrastructure instability</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else if eq .CommonLabels.alertname "ErrorBudgetExhausted" }}
+                <ul>
+                    <li><strong>Issue:</strong> Error budget completely exhausted for 30-day window</li>
+                    <li><strong>Impact:</strong> SLA violated, feature freeze required</li>
+                    <li><strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Major incident(s) consumed entire budget</li>
+                            <li>Sustained elevated error rate</li>
+                            <li>Insufficient reliability engineering focus</li>
+                            <li>Aggressive deployment cadence without adequate testing</li>
+                        </ul>
+                    </li>
+                </ul>
+                {{ else }}
+                <ul>
+                    <li><strong>Issue:</strong> {{ .CommonAnnotations.description }}</li>
+                    <li><strong>Impact:</strong> Service degradation or potential outage</li>
+                    <li><strong>Action Required:</strong> Immediate investigation needed</li>
+                </ul>
+                {{ end }}
+            </div>
+
+            <!-- Immediate Actions -->
+            <div class="actions">
+                <h4>⚡ Immediate Actions Required</h4>
+                <ol>
+                    <li><strong>Acknowledge:</strong> Acknowledge this alert in Alertmanager to prevent duplicate notifications</li>
+                    <li><strong>Investigate:</strong> Check Grafana dashboards for detailed metrics and trends</li>
+                    <li><strong>Check Logs:</strong> Review application/service logs for error messages and stack traces</li>
+                    <li><strong>Verify Impact:</strong> Confirm user impact through monitoring dashboards</li>
+                    <li><strong>Escalate:</strong> If unable to resolve in 15 minutes, escalate to team lead</li>
+                    <li><strong>Document:</strong> Create incident ticket with findings and actions taken</li>
+                    <li><strong>Communicate:</strong> Update status page if user-facing impact exists</li>
+                </ol>
+            </div>
+
+            <!-- Affected Instances -->
+            {{ if gt (len .Alerts) 1 }}
+            <div class="section">
+                <h3>📍 Affected Instances</h3>
+                <div class="alert-details">
+                    {{ range .Alerts }}
+                    <div style="margin-bottom: 10px;">
+                        <strong>Instance:</strong> {{ .Labels.instance }}<br>
+                        {{ if .Labels.ip }}<strong>IP:</strong> {{ .Labels.ip }}<br>{{ end }}
+                        <strong>Started:</strong> {{ .StartsAt.Format "15:04:05" }}<br>
+                        {{ if .Labels.value }}<strong>Value:</strong> {{ .Labels.value }}<br>{{ end }}
+                    </div>
+                    {{ end }}
+                </div>
+            </div>
+            {{ end }}
+
+            <!-- Quick Links -->
+            <div class="links">
+                <a href="http://grafana.yourcompany.com/d/enterprise-alerts-sla-slo" class="button">
+                    📊 View Alerts Dashboard
+                </a>
+                <a href="http://prometheus.yourcompany.com/alerts" class="button button-secondary">
+                    🔍 View in Prometheus
+                </a>
+                <a href="http://alertmanager.yourcompany.com/#/alerts" class="button button-secondary">
+                    ✅ Acknowledge Alert
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>This is an automated alert from Prometheus Alertmanager</p>
+            <p>Alert Dashboard: <a href="http://grafana.yourcompany.com/d/enterprise-alerts-sla-slo">Alerts & SLA/SLO Tracking</a></p>
+            <p>For support, contact: ops-team@yourcompany.com</p>
+        </div>
+    </div>
+</body>
+</html>
+{{ end }}

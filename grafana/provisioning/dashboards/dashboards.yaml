@@ -1,0 +1,38 @@
+apiVersion: 1
+
+providers:
+  - name: 'Infra Team'
+    orgId: 1
+    folder: 'Infra Team'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/infra
+
+  - name: 'Application Team'
+    orgId: 1
+    folder: 'Application Team'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/application
+
+  - name: 'Database Team'
+    orgId: 1
+    folder: 'Database Team'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/database
+
+  - name: 'SLA / SLO  - Alerting'
+    orgId: 1
+    folder: 'SLA / SLO  - Alerting'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/alerting

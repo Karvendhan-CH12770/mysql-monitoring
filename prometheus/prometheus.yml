@@ -1,51 +1,48 @@
 global:
   scrape_interval: 15s
-  evaluation_interval: 15s
-  external_labels:
-    monitor: 'mysql-monitoring'
 
-# Alertmanager configuration (optional)
-# alerting:
-#   alertmanagers:
-#     - static_configs:
-#         - targets: ['alertmanager:9093']
-
-# Load rules once and periodically evaluate them
-rule_files:
-  - "alert.rules.yml"
-
-# Scrape configurations
 scrape_configs:
-  # Prometheus itself
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  # MySQL Exporter
-  - job_name: 'mysql'
+  - job_name: 'node'
     static_configs:
-      - targets: ['mysqld-exporter:9104']
-        labels:
-          instance: 'mysql-production'
-          env: 'production'
-    scrape_interval: 5s
-    scrape_timeout: 5s
+      - targets: ['node-exporter:9100']
 
-  # MSSQL Exporter
-  - job_name: "mssql"
-    scrape_interval: 15s
+  - job_name: 'windows'
     static_configs:
-      - targets: ["mssql-exporter:4000"]
+      - targets:
+          - '10.180.16.227:9182'
         labels:
-          instance: 'mssql-production'
-          env: 'production'
+          environment: 'local'
+          team: 'platform'
+          ip: '10.180.16.227'
 
-  # Apache Exporter (Web server metrics)
   - job_name: 'apache'
     static_configs:
       - targets: ['apache-exporter:9117']
         labels:
-          instance: 'apache-webserver'
-          env: 'production'
-    scrape_interval: 5s
-    scrape_timeout: 5s
+          environment: 'local'
+          team: 'platform'
+
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+        labels:
+          environment: 'local'
+          team: 'platform'
+          ip: '192.168.0.4'
+  - job_name: 'mssql'
+    static_configs:
+      - targets: ['mssql-exporter:4000']
+        labels:
+            environment: 'local'
+            team: 'platform'
+            ip: '10.30.3.4'
+
+  - job_name: 'php-application'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['php-apache:80']
+

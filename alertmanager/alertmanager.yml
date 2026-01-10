@@ -1,0 +1,332 @@
+# Alertmanager Configuration
+# File: /etc/alertmanager/alertmanager.yml
+# 
+# Features:
+# - Email notifications per team
+# - Severity-based routing
+# - Custom email templates with root cause
+# - Grouping and deduplication
+
+global:
+  # SMTP Configuration
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'prometheus-alerts@yourcompany.com'
+  smtp_auth_username: 'prometheus-alerts@yourcompany.com'
+  smtp_auth_password: 'your-app-password'  # Gmail: Use App Password
+  smtp_require_tls: true
+
+  # Default notification settings
+  resolve_timeout: 5m
+
+# Define reusable templates
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route configuration - Team and Severity based routing
+route:
+  # Default receiver for all alerts
+  receiver: 'default-team'
+  
+  # Group alerts by these labels
+  group_by: ['alertname', 'team', 'environment', 'severity']
+  
+  # Wait time before sending first notification for a group
+  group_wait: 30s
+  
+  # Wait time before sending notification about new alerts in existing group
+  group_interval: 5m
+  
+  # Wait time before re-sending notification for unresolved alerts
+  repeat_interval: 4h
+
+  # Sub-routes for different teams
+  routes:
+    # ==========================================
+    # BACKEND TEAM ROUTES
+    # ==========================================
+    - match:
+        team: backend
+      receiver: 'backend-team'
+      group_by: ['alertname', 'environment', 'severity']
+      
+      routes:
+        # Critical alerts for backend team
+        - match:
+            severity: critical
+          receiver: 'backend-critical'
+          group_wait: 10s
+          repeat_interval: 30m
+          
+        # Warning alerts for backend team
+        - match:
+            severity: warning
+          receiver: 'backend-warning'
+          repeat_interval: 2h
+          
+        # Info alerts for backend team
+        - match:
+            severity: info
+          receiver: 'backend-info'
+          repeat_interval: 12h
+
+    # ==========================================
+    # PLATFORM TEAM ROUTES
+    # ==========================================
+    - match:
+        team: platform
+      receiver: 'platform-team'
+      group_by: ['alertname', 'environment', 'severity']
+      
+      routes:
+        # Critical alerts for platform team
+        - match:
+            severity: critical
+          receiver: 'platform-critical'
+          group_wait: 10s
+          repeat_interval: 30m
+          
+        # Warning alerts for platform team
+        - match:
+            severity: warning
+          receiver: 'platform-warning'
+          repeat_interval: 2h
+          
+        # Info alerts for platform team
+        - match:
+            severity: info
+          receiver: 'platform-info'
+          repeat_interval: 12h
+
+    # ==========================================
+    # DATA ENGINEERING TEAM ROUTES
+    # ==========================================
+    - match:
+        team: data-engineering
+      receiver: 'data-team'
+      group_by: ['alertname', 'environment', 'severity']
+      
+      routes:
+        # Critical alerts for data team
+        - match:
+            severity: critical
+          receiver: 'data-critical'
+          group_wait: 10s
+          repeat_interval: 30m
+          
+        # Warning alerts for data team
+        - match:
+            severity: warning
+          receiver: 'data-warning'
+          repeat_interval: 2h
+
+    # ==========================================
+    # FRONTEND TEAM ROUTES
+    # ==========================================
+    - match:
+        team: frontend
+      receiver: 'frontend-team'
+      group_by: ['alertname', 'environment', 'severity']
+      
+      routes:
+        # Critical alerts for frontend team
+        - match:
+            severity: critical
+          receiver: 'frontend-critical'
+          group_wait: 10s
+          repeat_interval: 30m
+          
+        # Warning alerts for frontend team
+        - match:
+            severity: warning
+          receiver: 'frontend-warning'
+          repeat_interval: 2h
+
+    # ==========================================
+    # PRODUCTION ENVIRONMENT - ALL TEAMS
+    # ==========================================
+    - match:
+        environment: production
+        severity: critical
+      receiver: 'production-critical-all-teams'
+      group_wait: 10s
+      repeat_interval: 30m
+      continue: true  # Continue to team-specific routes too
+
+# ==========================================
+# RECEIVERS - Email Configuration per Team
+# ==========================================
+receivers:
+  # Default receiver
+  - name: 'default-team'
+    email_configs:
+      - to: 'ops-team@yourcompany.com'
+        headers:
+          Subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }} - Default Route'
+        html: '{{ template "email.default.html" . }}'
+
+  # ==========================================
+  # BACKEND TEAM RECEIVERS
+  # ==========================================
+  - name: 'backend-team'
+    email_configs:
+      - to: 'backend-team@yourcompany.com'
+        headers:
+          Subject: '[{{ .Status | toUpper }}] Backend Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  - name: 'backend-critical'
+    email_configs:
+      # Send to team email
+      - to: 'backend-team@yourcompany.com'
+        headers:
+          Subject: '🚨 [CRITICAL] Backend Alert - {{ .GroupLabels.alertname }} ({{ .GroupLabels.environment }})'
+        html: '{{ template "email.critical.html" . }}'
+      
+      # CC team lead
+      - to: 'backend-lead@yourcompany.com'
+        headers:
+          Subject: '🚨 [CRITICAL] Backend Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.critical.html" . }}'
+
+  - name: 'backend-warning'
+    email_configs:
+      - to: 'backend-team@yourcompany.com'
+        headers:
+          Subject: '⚠️ [WARNING] Backend Alert - {{ .GroupLabels.alertname }} ({{ .GroupLabels.environment }})'
+        html: '{{ template "email.warning.html" . }}'
+
+  - name: 'backend-info'
+    email_configs:
+      - to: 'backend-team@yourcompany.com'
+        headers:
+          Subject: 'ℹ️ [INFO] Backend Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.info.html" . }}'
+
+  # ==========================================
+  # PLATFORM TEAM RECEIVERS
+  # ==========================================
+  - name: 'platform-team'
+    email_configs:
+      - to: 'platform-team@yourcompany.com'
+        headers:
+          Subject: '[{{ .Status | toUpper }}] Platform Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  - name: 'platform-critical'
+    email_configs:
+      # Send to team email
+      - to: 'platform-team@yourcompany.com'
+        headers:
+          Subject: '🚨 [CRITICAL] Platform Alert - {{ .GroupLabels.alertname }} ({{ .GroupLabels.environment }})'
+        html: '{{ template "email.critical.html" . }}'
+      
+      # CC CTO for platform critical alerts
+      - to: 'cto@yourcompany.com'
+        headers:
+          Subject: '🚨 [CRITICAL] Platform Infrastructure Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.critical.html" . }}'
+
+  - name: 'platform-warning'
+    email_configs:
+      - to: 'platform-team@yourcompany.com'
+        headers:
+          Subject: '⚠️ [WARNING] Platform Alert - {{ .GroupLabels.alertname }} ({{ .GroupLabels.environment }})'
+        html: '{{ template "email.warning.html" . }}'
+
+  - name: 'platform-info'
+    email_configs:
+      - to: 'platform-team@yourcompany.com'
+        headers:
+          Subject: 'ℹ️ [INFO] Platform Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.info.html" . }}'
+
+  # ==========================================
+  # DATA ENGINEERING TEAM RECEIVERS
+  # ==========================================
+  - name: 'data-team'
+    email_configs:
+      - to: 'data-engineering@yourcompany.com'
+        headers:
+          Subject: '[{{ .Status | toUpper }}] Data Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  - name: 'data-critical'
+    email_configs:
+      - to: 'data-engineering@yourcompany.com,data-lead@yourcompany.com'
+        headers:
+          Subject: '🚨 [CRITICAL] Data Pipeline Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.critical.html" . }}'
+
+  - name: 'data-warning'
+    email_configs:
+      - to: 'data-engineering@yourcompany.com'
+        headers:
+          Subject: '⚠️ [WARNING] Data Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.warning.html" . }}'
+
+  # ==========================================
+  # FRONTEND TEAM RECEIVERS
+  # ==========================================
+  - name: 'frontend-team'
+    email_configs:
+      - to: 'frontend-team@yourcompany.com'
+        headers:
+          Subject: '[{{ .Status | toUpper }}] Frontend Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  - name: 'frontend-critical'
+    email_configs:
+      - to: 'frontend-team@yourcompany.com,frontend-lead@yourcompany.com'
+        headers:
+          Subject: '🚨 [CRITICAL] Frontend Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.critical.html" . }}'
+
+  - name: 'frontend-warning'
+    email_configs:
+      - to: 'frontend-team@yourcompany.com'
+        headers:
+          Subject: '⚠️ [WARNING] Frontend Alert - {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.warning.html" . }}'
+
+  # ==========================================
+  # PRODUCTION CRITICAL - ALL TEAMS
+  # ==========================================
+  - name: 'production-critical-all-teams'
+    email_configs:
+      - to: 'ops-team@yourcompany.com,engineering-leads@yourcompany.com'
+        headers:
+          Subject: '🚨🚨 [PRODUCTION CRITICAL] {{ .GroupLabels.alertname }} - Immediate Action Required'
+        html: '{{ template "email.critical.html" . }}'
+
+# ==========================================
+# INHIBITION RULES
+# ==========================================
+# Prevent notification spam by inhibiting lower severity alerts
+# when higher severity alerts are firing for the same service
+inhibit_rules:
+  # Inhibit warning/info if critical is firing for same alertname
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'team', 'environment', 'instance']
+
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'info'
+    equal: ['alertname', 'team', 'environment', 'instance']
+
+  # Inhibit info if warning is firing
+  - source_match:
+      severity: 'warning'
+    target_match:
+      severity: 'info'
+    equal: ['alertname', 'team', 'environment', 'instance']
+
+  # Inhibit alerts if service is down
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['instance', 'job']

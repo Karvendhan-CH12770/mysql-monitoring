@@ -1,0 +1,31 @@
+{{ define "email.default.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; background-color: #f5f5f5; }
+        .container { background-color: #ffffff; border-radius: 8px; padding: 25px; max-width: 700px; margin: 0 auto; }
+        .header { border-bottom: 3px solid #007bff; padding-bottom: 15px; margin-bottom: 20px; }
+        .alert { background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Alert Notification</h2>
+        </div>
+        <div class="alert">
+            <p><strong>Alert:</strong> {{ .CommonLabels.alertname }}</p>
+            <p><strong>Status:</strong> {{ .Status }}</p>
+            <p><strong>Severity:</strong> {{ .CommonLabels.severity }}</p>
+            <p><strong>Team:</strong> {{ .CommonLabels.team }}</p>
+            <p><strong>Environment:</strong> {{ .CommonLabels.environment }}</p>
+            <p><strong>Summary:</strong> {{ .CommonAnnotations.summary }}</p>
+            <p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>
+        </div>
+        <p><a href="http://grafana.yourcompany.com/d/enterprise-alerts-sla-slo">View Dashboard</a></p>
+    </div>
+</body>
+</html>
+{{ end }}

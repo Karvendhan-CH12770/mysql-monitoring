@@ -1,0 +1,61 @@
+{{ define "email.warning.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+        .container { background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: #333; padding: 25px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 25px; }
+        .alert-summary { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; }
+        .section h3 { color: #ff9800; border-bottom: 2px solid #ffc107; padding-bottom: 8px; margin-bottom: 12px; }
+        .info-grid { display: grid; grid-template-columns: 150px 1fr; gap: 10px; margin-bottom: 12px; }
+        .badge-warning { background-color: #ffc107; color: #333; padding: 4px 10px; border-radius: 3px; font-weight: 600; }
+        .button { display: inline-block; padding: 10px 20px; margin: 8px 8px 8px 0; background-color: #ffc107; color: #333 !important; text-decoration: none; border-radius: 4px; font-weight: 600; }
+        .footer { background-color: #f8f9fa; padding: 15px; text-align: center; color: #6c757d; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ WARNING ALERT</h1>
+            <div>{{ .CommonLabels.alertname }}</div>
+        </div>
+        <div class="content">
+            <div class="alert-summary">
+                <p><strong>{{ .CommonAnnotations.summary }}</strong></p>
+                <p>{{ .CommonAnnotations.description }}</p>
+            </div>
+            <div class="section">
+                <h3>Alert Information</h3>
+                <div class="info-grid">
+                    <div><strong>Severity:</strong></div>
+                    <div><span class="badge-warning">WARNING</span></div>
+                    <div><strong>Team:</strong></div>
+                    <div>{{ .CommonLabels.team }}</div>
+                    <div><strong>Environment:</strong></div>
+                    <div>{{ .CommonLabels.environment }}</div>
+                </div>
+            </div>
+            <div class="section">
+                <h3>Recommended Actions</h3>
+                <ul>
+                    <li>Monitor the situation for escalation to critical</li>
+                    <li>Review Grafana dashboards for trends</li>
+                    <li>Plan remediation within next 1-2 hours</li>
+                    <li>Document findings in team channel</li>
+                </ul>
+            </div>
+            <div>
+                <a href="http://grafana.yourcompany.com/d/enterprise-alerts-sla-slo" class="button">View Dashboard</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Automated alert from Prometheus Alertmanager | Team: {{ .CommonLabels.team }}</p>
+        </div>
+    </div>
+</body>
+</html>
+{{ end }}

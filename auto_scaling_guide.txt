@@ -1,0 +1,177 @@
+🌐 1. Networking & Request Flow (START HERE)
+Understand how a request travels
+
+HTTP methods & status codes
+Port
+DNS resolution
+HTTPS
+SSL & TLS
+CORS
+
+
+🖥️ 2. Infrastructure (How servers handle traffic)
+
+VPS Server setup
+Web server (Nginx / Apache)
+Reverse proxy vs forward proxy
+CDN (Content Delivery Network)
+Load Balancer
+Auto Scaling
+
+
+🔐 3. Security Fundamentals
+
+SSH
+Firewall
+File permissions
+Authentication & Authorization
+JWT vs session-based auth
+CSRF
+XSS
+SQL Injection
+File upload vulnerability
+Rate limiting
+Types of vulnerability
+
+
+🧠 4. Application Layer (Backend Design)
+
+Stateless API
+REST vs GraphQL
+API Gateway
+Pagination strategies
+WebSockets vs HTTP polling
+Event-driven architecture
+Monolithic vs Microservices
+
+
+⚡ 5. Caching & Performance
+
+Cache (concepts)
+Redis
+N+1 query problem
+Connection pooling
+
+
+🗄️ 6. Database Core
+
+DDL / DML / DQL / DCL / TCL
+PK, FK, UK, CK, SP, FN, CTE, MV
+ACID
+Transactions in practice
+MySQL EXPLAIN
+Index types (BTREE, HASH, FULLTEXT)
+Normalization vs denormalization
+
+
+📈 7. Database Advanced & Scaling
+
+Query optimization workflow
+Deadlocks
+Partitioning
+Replication (primary / replica)
+OLTP vs OLAP
+Database migration strategy
+Database changes (Add column, index)
+ALGORITHM=INPLACE, LOCK=NONE
+
+
+⚙️ 8. Language / Runtime Performance
+
+Node.js event loop OR PHP basics
+Memory leak debugging
+PHP params (performance, security)
+PHP-FPM tuning
+OPcache
+HTTP/2 vs HTTP/3
+
+
+📦 9. DevOps / CI-CD
+
+Git commands
+Git branching strategy
+npm install vs npm ci
+Docker & containerization
+GitHub Actions
+GitHub Actions runner
+Secrets & environment variables
+Zero downtime deployment
+Blue-green vs canary deployment
+
+
+📊 10. Observability & Production
+
+Metrics
+Health checks
+Alerting strategy
+SonarQube
+Azure Portal
+
+
+🖥️ 11. OS & Process Management
+
+Cron jobs
+systemd / services
+Process management
+
+
+
+1. access_type
+First thing to look at. From best to worst:
+
+const / eq_ref — perfect
+ref — good
+range — acceptable
+index_merge — investigate
+index — slow
+ALL — critical, fix immediately
+
+
+2. rows
+How many rows MySQL estimates it will scan. Lower is better. High number means the index is not filtering enough.
+
+3. filtered
+Percentage of scanned rows that actually pass the WHERE condition.
+
+Above 50% — good
+20% to 50% — acceptable
+Below 20% — problem, index is not selective enough
+Your query — 5.2%, needs improvement
+
+
+4. possible_keys
+Indexes MySQL considered. If this is NULL, no index exists for this query — you need to add one.
+
+5. key
+Index MySQL actually chose. If NULL but possible_keys has values, MySQL decided a full table scan was cheaper — investigate why.
+
+6. key_length
+How many bytes of the index were used. If much shorter than the full index length, MySQL is only using part of your composite index — column order may be wrong.
+
+7. index_merge
+If present, means no single index could handle the query. Usually caused by OR conditions on different columns. Consider redesigning the index or splitting into UNION.
+
+8. using_temporary
+MySQL created a hidden temp table. Common with GROUP BY or DISTINCT on non-indexed columns. Hurts performance on large data.
+
+9. using_filesort
+MySQL could not use an index for ORDER BY, so it sorted manually. If result set is large this hits disk. Fix by including the ORDER BY column in your index.
+
+10. using_index (Covering Index)
+This is the goal. Means MySQL got everything it needs from the index alone — no row lookup needed. Best possible outcome.
+
+11. using_where
+MySQL applied a WHERE filter after fetching the row. Means the index alone could not filter completely. Acceptable but check if a better index can push more filtering earlier.
+
+12. using_index_condition
+Index Condition Pushdown (ICP). MySQL filters at the index level before fetching the full row. Better than using_where. Good sign.
+
+13. using_join_buffer
+A JOIN table has no usable index. MySQL loads rows into memory buffer and loops through them. Add an index on the JOIN column to fix.
+
+14. query_cost
+Only visible in FORMAT=JSON. Total estimated cost of the query. Use this to compare before and after adding indexes. Lower is better.
+
+15. attached_condition
+The remaining WHERE filter applied after index access. If this is very large (like your 400+ IN list), it means a lot of row-by-row checking is happening after the index scan.
+

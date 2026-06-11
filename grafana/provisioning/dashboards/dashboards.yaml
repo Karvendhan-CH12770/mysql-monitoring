@@ -1,38 +1,58 @@
-apiVersion: 1
+﻿apiVersion: 1
 
 providers:
-  - name: 'Infra Team'
-    orgId: 1
-    folder: 'Infra Team'
-    type: file
-    disableDeletion: false
-    editable: true
-    options:
-      path: /etc/grafana/provisioning/dashboards/infra
 
-  - name: 'Application Team'
+  - name: 'infra'
     orgId: 1
-    folder: 'Application Team'
+    folder: 'Infrastructure'
+    folderUid: 'infra'
     type: file
-    disableDeletion: false
-    editable: true
+    disableDeletion: true
+    editable: false
+    updateIntervalSeconds: 30
     options:
-      path: /etc/grafana/provisioning/dashboards/application
+      path: C:\monitoring\grafana\provisioning\dashboards\infra
 
-  - name: 'Database Team'
+  - name: 'application'
     orgId: 1
-    folder: 'Database Team'
+    folder: 'Application'
+    folderUid: 'application'
     type: file
-    disableDeletion: false
-    editable: true
+    disableDeletion: true
+    editable: false
+    updateIntervalSeconds: 30
     options:
-      path: /etc/grafana/provisioning/dashboards/database
+      path: C:\monitoring\grafana\provisioning\dashboards\application
 
-  - name: 'SLA / SLO  - Alerting'
+  - name: 'database'
     orgId: 1
-    folder: 'SLA / SLO  - Alerting'
+    folder: 'Database'
+    folderUid: 'database'
     type: file
-    disableDeletion: false
-    editable: true
+    disableDeletion: true
+    editable: false
+    updateIntervalSeconds: 30
     options:
-      path: /etc/grafana/provisioning/dashboards/alerting
+      path: C:\monitoring\grafana\provisioning\dashboards\database
+
+  - name: 'node-js'
+    orgId: 1
+    folder: 'Node.js'
+    folderUid: 'node-js'
+    type: file
+    disableDeletion: true
+    editable: false
+    updateIntervalSeconds: 30
+    options:
+      path: C:\monitoring\grafana\provisioning\dashboards\node-js
+
+  - name: 'alerting'
+    orgId: 1
+    folder: 'Alerting'
+    folderUid: 'alerting'
+    type: file
+    disableDeletion: true
+    editable: false
+    updateIntervalSeconds: 30
+    options:
+      path: C:\monitoring\grafana\provisioning\dashboards\alerting

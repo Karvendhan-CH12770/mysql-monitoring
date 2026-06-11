@@ -1,48 +1,177 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: 'production'
+    monitor: 'central-prometheus'
+
+# Alertmanager connection
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+# Alert rules files
+rule_files:
+  - "rules/*.yml"
 
 scrape_configs:
+
+  # ============================================================
+  # Prometheus self-monitoring
+  # ============================================================
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
-
-  - job_name: 'node'
-    static_configs:
-      - targets: ['node-exporter:9100']
-
-  - job_name: 'windows'
-    static_configs:
-      - targets:
-          - '10.180.16.227:9182'
         labels:
-          environment: 'local'
-          team: 'platform'
-          ip: '10.180.16.227'
-
-  - job_name: 'apache'
-    static_configs:
-      - targets: ['apache-exporter:9117']
-        labels:
-          environment: 'local'
+          server_name: 'monitoring-server'
           team: 'platform'
 
-  - job_name: 'mysql'
+  # ============================================================
+  # Windows Servers - windows_exporter :9182
+  # Add more servers by copying the {} block under targets
+  # ============================================================
+  - job_name: 'windows_servers'
     static_configs:
-      - targets: ['mysql-exporter:9104']
+      - targets: ['13.71.103.139:9182']
         labels:
-          environment: 'local'
+          server_name: 'LMS-139'
+          environment: 'production'
           team: 'platform'
-          ip: '192.168.0.4'
-  - job_name: 'mssql'
+          os: 'windows'
+
+      # Add more Windows servers below when ready:
+      # - targets: ['10.180.16.228:9182']
+      #   labels:
+      #     server_name: 'app-server-02'
+      #     environment: 'production'
+      #     team: 'platform'
+      #     os: 'windows'
+
+  # ============================================================
+  # Linux Ubuntu Servers - node_exporter :9100
+  # Add more Linux servers by copying the {} block under targets
+  # ============================================================
+  - job_name: 'linux_servers'
     static_configs:
-      - targets: ['mssql-exporter:4000']
+      - targets: ['20.9.57.243:9100']
         labels:
-            environment: 'local'
-            team: 'platform'
-            ip: '10.30.3.4'
+          server_name: 'corrodlp-app-server'
+          environment: 'production'
+          team: 'platform'
+          os: 'linux'
 
-  - job_name: 'php-application'
-    metrics_path: /metrics
+      # Add more Linux servers below when ready:
+      # - targets: ['10.x.x.x:9100']
+      #   labels:
+      #     server_name: 'app-server-02'
+      #     environment: 'production'
+      #     team: 'platform'
+      #     os: 'linux'
+
+  # ============================================================
+  # Nginx - nginx_exporter :9113
+  # ============================================================
+  - job_name: 'nginx_servers'
     static_configs:
-      - targets: ['php-apache:80']
+      - targets: ['20.9.57.243:9113']
+        labels:
+          server_name: 'corrodlp-app-server'
+          environment: 'production'
+          team: 'platform'
 
+      # Add more Nginx servers below when ready:
+      # - targets: ['10.x.x.x:9113']
+      #   labels:
+      #     server_name: 'app-server-02'
+      #     environment: 'production'
+      #     team: 'platform'
+
+  # ============================================================
+  # PostgreSQL - postgres_exporter :9187
+  # ============================================================
+  - job_name: 'postgres_servers'
+    static_configs:
+      - targets: ['20.9.57.243:9187']
+        labels:
+          server_name: 'corrodlp-db-server'
+          environment: 'production'
+          team: 'platform'
+
+      # Add more PostgreSQL servers below when ready:
+      # - targets: ['10.x.x.x:9187']
+      #   labels:
+      #     server_name: 'db-server-02'
+      #     environment: 'production'
+      #     team: 'platform'
+
+  # ============================================================
+  # Node.js Express Applications - :APP_PORT/metrics
+  # Add more apps by copying the {} block under targets
+  # ============================================================
+  - job_name: 'nodejs_applications'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['20.9.57.243:3001']
+        labels:
+          application: 'corrodlp-backend'
+          server_name: 'corrodlp-app-server'
+          environment: 'production'
+          team: 'platform'
+
+      # Add more Node.js apps below when ready:
+      # - targets: ['10.x.x.x:4000']
+      #   labels:
+      #     application: 'another-backend'
+      #     server_name: 'app-server-02'
+      #     environment: 'production'
+      #     team: 'platform'
+
+  # ============================================================
+  # MSSQL - mssql_exporter
+  # ============================================================
+  - job_name: 'mssql_servers'
+    static_configs:
+      - targets: ['13.71.103.139:4000']
+        labels:
+          server_name: 'mssql-server-01'
+          environment: 'production'
+          team: 'platform'
+          os: 'windows'
+
+      # Add more MSSQL servers below when ready:
+      # - targets: ['10.x.x.x:4000']
+      #   labels:
+      #     server_name: 'mssql-server-02'
+      #     environment: 'production'
+      #     team: 'platform'
+  # ============================================================
+  # MySQL - mysqld_exporter
+  # ============================================================
+  - job_name: 'mysql_servers'
+    static_configs:
+      - targets: ['13.71.103.139:9104']
+        labels:
+          server_name: 'mysql-server-01'
+          environment: 'production'
+          team: 'platform'
+          os: 'windows'
+  # ============================================================
+  # Apache - apache_exporter
+  # ============================================================
+  - job_name: 'apache_servers'
+    static_configs:
+      - targets: ['13.71.103.139:9117']
+        labels:
+          server_name: 'apache-server-01'
+          environment: 'production'
+          team: 'platform'
+          os: 'windows'
+
+      # Add more Apache servers below when ready:
+      # - targets: ['10.x.x.x:9117']
+      #   labels:
+      #     server_name: 'apache-server-02'
+      #     environment: 'production'
+      #     team: 'platform'
+      #     os: 'windows'

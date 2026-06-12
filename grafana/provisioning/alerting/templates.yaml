@@ -1,0 +1,70 @@
+apiVersion: 1
+
+templates:
+
+  - orgId: 1
+    name: team_email
+    template: |
+      {{ define "team_email" -}}
+      {{- if eq .CommonLabels.team "apache-team" -}}apache-server01-team@yourcompany.com
+      {{- else if eq .CommonLabels.team "apache-team-02" -}}apache-server02-team@yourcompany.com
+      {{- else if eq .CommonLabels.team "web-team" -}}nginx-team@yourcompany.com
+      {{- else if eq .CommonLabels.team "dba-team" -}}dba-team@yourcompany.com
+      {{- else if eq .CommonLabels.team "infra-team" -}}infra-team@yourcompany.com
+      {{- else if eq .CommonLabels.team "nodejs-team" -}}nodejs-team@yourcompany.com
+      {{- else if eq .CommonLabels.team "platform" -}}platform-team@yourcompany.com
+      {{- else -}}monitoring-archive@yourcompany.com
+      {{- end -}}
+      {{- end }}
+
+  - orgId: 1
+    name: alert_subject
+    template: |
+      {{ define "alert_subject" -}}
+      {{- if eq .CommonLabels.severity "critical" -}}[CRITICAL]
+      {{- else if eq .CommonLabels.severity "warning" -}}[WARNING]
+      {{- else -}}[INFO]
+      {{- end }} {{ .CommonLabels.alertname }}{{ if .CommonLabels.team }} | {{ .CommonLabels.team }}{{ end }}
+      {{- end }}
+
+  - orgId: 1
+    name: alert_body
+    template: |
+      {{ define "alert_body" -}}
+      {{- $sev := .CommonLabels.severity -}}
+      {{- $alert := index .Alerts 0 -}}
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"></head>
+      <body style="margin:0;padding:16px;background:#f1f5f9;font-family:Arial,sans-serif;">
+      <div style="max-width:600px;margin:0 auto;">
+
+      {{ if eq $sev "critical" }}
+      <div style="background:#991b1b;padding:16px;border-radius:6px 6px 0 0;text-align:center;">
+        <div style="color:#fff;font-size:18px;font-weight:700;">CRITICAL ALERT</div>
+      </div>
+      {{ else if eq $sev "warning" }}
+      <div style="background:#b45309;padding:16px;border-radius:6px 6px 0 0;text-align:center;">
+        <div style="color:#fff;font-size:18px;font-weight:700;">WARNING ALERT</div>
+      </div>
+      {{ else }}
+      <div style="background:#1e40af;padding:16px;border-radius:6px 6px 0 0;text-align:center;">
+        <div style="color:#fff;font-size:18px;font-weight:700;">INFO NOTIFICATION</div>
+      </div>
+      {{ end }}
+
+      <div style="background:#fff;border:1px solid #e2e8f0;border-top:none;padding:16px;border-radius:0 0 6px 6px;">
+        <p><strong>Alert:</strong> {{ .CommonLabels.alertname }}</p>
+        <p><strong>Severity:</strong> {{ $sev }}</p>
+        <p><strong>Team:</strong> {{ .CommonLabels.team }}</p>
+        <p><strong>Instance:</strong> {{ if .CommonLabels.instance }}{{ .CommonLabels.instance }}{{ else }}N/A{{ end }}</p>
+        <p><strong>Status:</strong> {{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }}</p>
+        <p><strong>Started:</strong> {{ $alert.StartsAt.Format "2006-01-02 15:04:05" }}</p>
+        {{ if .CommonAnnotations.description }}<p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>{{ end }}
+        {{ if $alert.GeneratorURL }}<p><a href="{{ $alert.GeneratorURL }}">View in Grafana</a></p>{{ end }}
+      </div>
+
+      </div>
+      </body>
+      </html>
+      {{- end }}

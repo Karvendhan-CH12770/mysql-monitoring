@@ -1,0 +1,491 @@
+apiVersion: 1
+
+# =============================================================================
+# Alert Rules — Database Team (MySQL & PostgreSQL)
+# Folder: Database
+#
+# TEAM ROUTING:
+#   The `team` label is NOT hardcoded here. It flows automatically from the
+#   prometheus.yml scrape config target labels:
+#     mysql_servers job    →  team: dba-team  →  routes to dba-team contact point
+#     mssql_servers job    →  team: dba-team  →  routes to dba-team contact point
+#     postgres_servers job →  team: dba-team  →  routes to dba-team contact point
+#
+# MySQL Rules:
+#   1. MySQLDatabaseDown          (critical) — mysqld not responding
+#   2. MySQLHighConnectionUsage   (critical) — connections > 90%
+#   3. MySQLConnectionUsageWarning(warning)  — connections > 75%
+#   4. MySQLSlowQueriesHigh       (warning)  — slow query rate > 5/min
+#   5. MySQLReplicationLagHigh    (critical) — replication lag > 30s
+#
+# PostgreSQL Rules:
+#   6. PostgreSQLDown             (critical) — postgres not responding
+#   7. PostgreSQLHighConnections  (warning)  — connections > 80% of max
+#   8. PostgreSQLLongRunningQuery (warning)  — query running > 5 minutes
+# =============================================================================
+
+groups:
+
+  # ---------------------------------------------------------------------------
+  # MySQL Alert Rules
+  # ---------------------------------------------------------------------------
+  - orgId: 1
+    name: MySQL Database Alerts
+    folder: Database
+    interval: 1m
+    rules:
+
+      # -----------------------------------------------------------------------
+      # 1. MySQL Database Down — CRITICAL
+      # -----------------------------------------------------------------------
+      - uid: rule-mysql-down
+        title: MySQLDatabaseDown
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: Alerting
+        execErrState: Alerting
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: MySQL Performance Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "MySQL server {{ $labels.instance }} is DOWN"
+          description: "MySQL on {{ $labels.instance }} is not responding to the exporter health check."
+          root_cause: >
+            The MySQL server process on {{ $labels.instance }} has stopped responding.
+            All applications relying on this database will experience connection failures,
+            resulting in service degradation or complete outage. Possible causes include:
+            mysqld process crash, disk space exhaustion preventing InnoDB operations,
+            max_connections limit causing a hang, corrupted data files, or an OOM kill.
+          action_item: >
+            1. SSH to {{ $labels.instance }} and check: sudo systemctl status mysql.
+            2. Check MySQL error log: sudo tail -200 /var/log/mysql/error.log.
+            3. Check disk space: df -h /var/lib/mysql.
+            4. If crashed, restart carefully: sudo systemctl start mysql.
+            5. After restart, verify InnoDB recovery: sudo mysqladmin -u root -p status.
+            6. Alert application team immediately — all DB-dependent services are affected.
+            7. Escalate to DBA lead if not resolved within 10 minutes.
+          dashboard_url: "http://localhost:3000/d/enterprise-mysql-performance"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: mysql_up
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [1], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 2. MySQL High Connection Usage — CRITICAL (>90%)
+      # -----------------------------------------------------------------------
+      - uid: rule-mysql-connections-critical
+        title: MySQLHighConnectionUsage
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: MySQL Performance Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "MySQL connection pool >90% on {{ $labels.instance }}"
+          description: "MySQL threads_connected / max_connections exceeds 90% on {{ $labels.instance }}."
+          root_cause: >
+            MySQL on {{ $labels.instance }} has more than 90% of its max_connections in use.
+            New connection requests from applications will be rejected with "Too many connections"
+            error, causing application errors. Causes: connection leaks (connections not returned
+            to pool), long-running transactions holding connections, traffic spike exceeding pool
+            capacity, or max_connections configured too low for current workload.
+          action_item: >
+            1. Check current connection count: SHOW STATUS LIKE 'Threads_connected'; and SHOW VARIABLES LIKE 'max_connections';
+            2. Find connection-heavy clients: SELECT user, host, count(*) FROM information_schema.processlist GROUP BY user, host;
+            3. Kill idle/sleeping connections older than 1 hour: use pt-kill or manual KILL.
+            4. Check for long-running transactions: SELECT * FROM information_schema.innodb_trx;
+            5. Temporarily increase max_connections if safe: SET GLOBAL max_connections = 300;
+            6. Notify application team to check connection pool settings (pool_size, timeout).
+          dashboard_url: "http://localhost:3000/d/enterprise-mysql-performance"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [90], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 3. MySQL Connection Usage Warning (>75%)
+      # -----------------------------------------------------------------------
+      - uid: rule-mysql-connections-warning
+        title: MySQLConnectionUsageWarning
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: MySQL Performance Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "MySQL connection pool elevated on {{ $labels.instance }} (>75%)"
+          description: "MySQL threads_connected / max_connections is between 75-90% on {{ $labels.instance }}."
+          root_cause: >
+            MySQL connection pool usage on {{ $labels.instance }} has risen above 75%.
+            The server is still accepting connections, but the system is approaching saturation.
+            If connection count continues to grow or does not decrease, a critical threshold
+            breach and connection refusals will occur.
+          action_item: >
+            1. Monitor the connection trend in the MySQL dashboard.
+            2. Review connection pool settings in the application (max pool size, idle timeout).
+            3. Identify top connection consumers: SELECT user, host, count(*) FROM information_schema.processlist GROUP BY 1,2;
+            4. No immediate action needed, but plan remediation if trend is upward.
+          dashboard_url: "http://localhost:3000/d/enterprise-mysql-performance"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [75], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 4. MySQL Slow Queries High — WARNING (>5 per minute)
+      # -----------------------------------------------------------------------
+      - uid: rule-mysql-slow-queries
+        title: MySQLSlowQueriesHigh
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: MySQL Performance Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "MySQL slow query rate elevated on {{ $labels.instance }} (>5/min)"
+          description: "MySQL slow_query rate has exceeded 5 per minute on {{ $labels.instance }} for the past 5 minutes."
+          root_cause: >
+            MySQL on {{ $labels.instance }} is logging more than 5 slow queries per minute.
+            This indicates queries are exceeding the long_query_time threshold. Root causes
+            include missing indexes on frequently queried columns, full table scans on large
+            tables, suboptimal query plans from stale statistics, or lock contention causing
+            queries to wait before executing.
+          action_item: >
+            1. Enable and check slow query log: SHOW VARIABLES LIKE 'slow_query_log%';
+            2. Analyze top slow queries: use pt-query-digest or mysqldumpslow /var/log/mysql/slow.log.
+            3. Run EXPLAIN on the identified slow queries to check query plans.
+            4. Add missing indexes where table scans are found.
+            5. Run ANALYZE TABLE on tables with stale statistics.
+            6. Check for lock waits: SELECT * FROM information_schema.innodb_lock_waits;
+          dashboard_url: "http://localhost:3000/d/enterprise-mysql-performance"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "rate(mysql_global_status_slow_queries[5m]) * 60"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [5], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 5. MySQL Replication Lag High — CRITICAL (>30s)
+      # -----------------------------------------------------------------------
+      - uid: rule-mysql-replication-lag
+        title: MySQLReplicationLagHigh
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: MySQL Performance Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "MySQL replication lag >30s on {{ $labels.instance }}"
+          description: "MySQL replica {{ $labels.instance }} is lagging more than 30 seconds behind the primary."
+          root_cause: >
+            MySQL replication on {{ $labels.instance }} has fallen more than 30 seconds behind
+            the primary server. Applications reading from this replica may receive stale data.
+            Causes include: long-running queries on the primary blocking the replica's SQL thread,
+            high write load on the primary exceeding the replica's ability to apply changes,
+            network latency between primary and replica, or a replica SQL thread error/crash.
+          action_item: >
+            1. Check replica status: SHOW SLAVE STATUS\G (look at Seconds_Behind_Master).
+            2. Check if SQL thread is running: look for Slave_SQL_Running: Yes.
+            3. Identify blocking queries on replica: SHOW PROCESSLIST;
+            4. Review replica error log for SQL thread failures.
+            5. If lag is growing, consider routing read traffic temporarily to primary.
+            6. If replica is severely behind, evaluate STOP SLAVE; SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START SLAVE; (with DBA approval only).
+          dashboard_url: "http://localhost:3000/d/enterprise-mysql-performance"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "mysql_slave_status_seconds_behind_master"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [30], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Alert Rules
+  # ---------------------------------------------------------------------------
+  - orgId: 1
+    name: PostgreSQL Database Alerts
+    folder: Database
+    interval: 1m
+    rules:
+
+      # -----------------------------------------------------------------------
+      # 6. PostgreSQL Down — CRITICAL
+      # -----------------------------------------------------------------------
+      - uid: rule-postgres-down
+        title: PostgreSQLDatabaseDown
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: Alerting
+        execErrState: Alerting
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: PostgreSQL Performance Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "PostgreSQL server {{ $labels.instance }} is DOWN"
+          description: "PostgreSQL on {{ $labels.instance }} is not responding to the exporter health check."
+          root_cause: >
+            The PostgreSQL database server on {{ $labels.instance }} has stopped responding.
+            All applications using this database will fail with connection errors. Possible
+            causes include: postmaster process crash, disk space exhausted on the data directory,
+            max_connections reached causing a deadlock, an unrecoverable WAL corruption, or an
+            OOM kill terminating the postgres process.
+          action_item: >
+            1. SSH to {{ $labels.instance }}: sudo systemctl status postgresql.
+            2. Check data directory disk: df -h $(psql -U postgres -t -c "SHOW data_directory;").
+            3. Review PostgreSQL logs: sudo tail -200 /var/log/postgresql/postgresql-*.log.
+            4. Restart if safe: sudo systemctl restart postgresql.
+            5. Verify pg_hba.conf and postgresql.conf for any recent changes.
+            6. Alert all application teams — all PostgreSQL-dependent services are impacted.
+          dashboard_url: "http://localhost:3000/d/enterprise-postgresql-performance"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "pg_up"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [1], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 7. PostgreSQL High Connection Usage — WARNING (>80% of max_conn)
+      # by (instance, team) preserves the team label through the sum aggregation
+      # -----------------------------------------------------------------------
+      - uid: rule-postgres-connections
+        title: PostgreSQLHighConnections
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: PostgreSQL Performance Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "PostgreSQL connection usage >80% on {{ $labels.instance }}"
+          description: "PostgreSQL active connections exceed 80% of max_connections on {{ $labels.instance }}."
+          root_cause: >
+            PostgreSQL on {{ $labels.instance }} is using more than 80% of its available
+            max_connections slots. If connections continue to grow, new clients will receive
+            "FATAL: remaining connection slots are reserved" errors. This is commonly caused
+            by application connection pools not releasing idle connections, or a sudden traffic
+            increase without a connection pooler (PgBouncer) in place.
+          action_item: >
+            1. Check: SELECT count(*), state FROM pg_stat_activity GROUP BY state;
+            2. Identify idle connections: SELECT pid, usename, application_name, state, query_start FROM pg_stat_activity WHERE state = 'idle' ORDER BY query_start;
+            3. Terminate long-idle connections: SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state='idle' AND query_start < now() - interval '30 minutes';
+            4. Consider deploying PgBouncer as a connection pooler if not already in use.
+            5. Review application connection pool max_size and idle_timeout settings.
+          dashboard_url: "http://localhost:3000/d/enterprise-postgresql-performance"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "sum by (instance, team) (pg_stat_activity_count) / on(instance, team) pg_settings_max_connections * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [80], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 8. PostgreSQL Long Running Query — WARNING (>5 minutes)
+      # by (instance, team) preserves the team label through the max aggregation
+      # -----------------------------------------------------------------------
+      - uid: rule-postgres-long-query
+        title: PostgreSQLLongRunningQuery
+        condition: C
+        for: 1m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: PostgreSQL Performance Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Long-running PostgreSQL query detected on {{ $labels.instance }} (>5 min)"
+          description: "A query on {{ $labels.instance }} has been running for more than 5 minutes."
+          root_cause: >
+            A query on PostgreSQL {{ $labels.instance }} has been executing for over 5 minutes.
+            Long-running queries hold row/table locks, blocking other transactions and degrading
+            overall database performance. Causes include: missing indexes causing sequential
+            scans on large tables, full table joins without appropriate query planning hints,
+            or an accidental runaway query in a development or ETL workflow.
+          action_item: >
+            1. Identify the query: SELECT pid, now() - pg_stat_activity.query_start AS duration, query, state FROM pg_stat_activity WHERE state != 'idle' AND (now() - pg_stat_activity.query_start) > interval '5 minutes';
+            2. Assess whether the query is expected (ETL job, report) or accidental.
+            3. If unexpected, cancel it: SELECT pg_cancel_backend(pid); (soft) or SELECT pg_terminate_backend(pid); (hard).
+            4. Run EXPLAIN ANALYZE on the query to identify optimization opportunities.
+            5. Add appropriate indexes if a sequential scan is detected.
+          dashboard_url: "http://localhost:3000/d/enterprise-postgresql-performance"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "max by (instance, team) (pg_stat_activity_max_tx_duration{state!=\"idle\"})"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [300], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold

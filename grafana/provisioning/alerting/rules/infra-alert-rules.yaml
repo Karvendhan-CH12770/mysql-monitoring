@@ -1,0 +1,808 @@
+apiVersion: 1
+
+# =============================================================================
+# Alert Rules — Infrastructure Team (Windows & Linux)
+# Folder: Infrastructure
+#
+# TEAM ROUTING:
+#   The `team` label is NOT hardcoded here. It flows automatically from the
+#   prometheus.yml scrape config target labels:
+#     windows_servers job  →  team: infra-team  →  routes to infra-team contact point
+#     linux_servers job    →  team: infra-team  →  routes to infra-team contact point
+#
+#   NOTE: CPU aggregation expressions use  avg by (instance, team) (...)
+#   to ensure the `team` label is preserved through the aggregation.
+#
+# Windows Rules (windows_exporter metrics):
+#   1.  WindowsServerDown     (critical) — exporter not responding
+#   2.  WindowsHighCPU        (critical) — CPU > 90%
+#   3.  WindowsCPUWarning     (warning)  — CPU > 80%
+#   4.  WindowsHighMemory     (critical) — memory > 90%
+#   5.  WindowsMemoryWarning  (warning)  — memory > 80%
+#   6.  WindowsDiskCritical   (critical) — disk usage > 90%
+#   7.  WindowsDiskWarning    (warning)  — disk usage > 80%
+#
+# Linux Rules (node_exporter metrics):
+#   8.  LinuxServerDown       (critical) — exporter not responding
+#   9.  LinuxHighCPU          (critical) — CPU > 90%
+#   10. LinuxCPUWarning       (warning)  — CPU > 80%
+#   11. LinuxHighMemory       (critical) — memory > 90%
+#   12. LinuxMemoryWarning    (warning)  — memory > 80%
+#   13. LinuxDiskCritical     (critical) — disk usage > 90%
+#   14. LinuxDiskWarning      (warning)  — disk usage > 80%
+# =============================================================================
+
+groups:
+
+  # ---------------------------------------------------------------------------
+  # Windows Infrastructure Alert Rules
+  # ---------------------------------------------------------------------------
+  - orgId: 1
+    name: Windows Infrastructure Alerts
+    folder: Infrastructure
+    interval: 1m
+    rules:
+
+      # -----------------------------------------------------------------------
+      # 1. Windows Server Down — CRITICAL
+      # -----------------------------------------------------------------------
+      - uid: rule-windows-server-down
+        title: WindowsServerDown
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: Alerting
+        execErrState: Alerting
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Windows/OS Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Windows server {{ $labels.instance }} is unreachable"
+          description: "windows_exporter on {{ $labels.instance }} has stopped responding. Server may be down."
+          root_cause: >
+            The Windows Exporter agent on {{ $labels.instance }} has stopped reporting metrics.
+            The server itself may be powered off, experiencing a network failure, or the
+            windows_exporter service may have crashed. All hosted services on this server
+            are potentially unavailable and require immediate investigation.
+          action_item: >
+            1. Attempt to ping the server: ping {{ $labels.instance }}.
+            2. Try RDP or SSH to the server.
+            3. Check if the windows_exporter service is running: Get-Service windows_exporter.
+            4. Restart the exporter if the server is up: Restart-Service windows_exporter.
+            5. If server is unreachable, escalate to network/datacenter team immediately.
+            6. Check hypervisor console (if VM) or physical access (if bare metal).
+          dashboard_url: "http://localhost:3000/d/enterprise-windows-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "up{job=~\"windows.*\"}"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [1], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 2. Windows High CPU — CRITICAL (>90%)
+      # avg by (instance, team) preserves the team label through aggregation
+      # -----------------------------------------------------------------------
+      - uid: rule-windows-cpu-critical
+        title: WindowsHighCPU
+        condition: C
+        for: 3m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Windows/OS Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Windows CPU critically high on {{ $labels.instance }} (>90%)"
+          description: "CPU utilization on Windows server {{ $labels.instance }} has exceeded 90% for 3 minutes."
+          root_cause: >
+            CPU utilization on {{ $labels.instance }} has been above 90% for over 3 minutes.
+            At this level, all running processes including IIS, services, and background
+            tasks experience severe slowdowns. Possible causes: a runaway process consuming
+            all cores, Windows Update running full indexing/compilation tasks, an application
+            bug causing an infinite loop, or a crypto-mining malware infection.
+          action_item: >
+            1. Open Task Manager or run: Get-Process | Sort-Object CPU -Descending | Select-Object -First 10.
+            2. Identify the top CPU-consuming process.
+            3. If a legitimate service, consider increasing server resources or offloading workload.
+            4. If unknown process, investigate for malware: run Windows Defender scan.
+            5. If Windows Update, schedule for off-peak window: Stop-Service wuauserv.
+            6. Consider rebooting if CPU doesn't recover within 10 minutes.
+          dashboard_url: "http://localhost:3000/d/enterprise-windows-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "100 - (avg by (instance, team) (rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [90], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 3. Windows CPU Warning (>80%)
+      # avg by (instance, team) preserves the team label through aggregation
+      # -----------------------------------------------------------------------
+      - uid: rule-windows-cpu-warning
+        title: WindowsCPUWarning
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Windows/OS Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Windows CPU elevated on {{ $labels.instance }} (>80%)"
+          description: "CPU usage on {{ $labels.instance }} is between 80-90%."
+          root_cause: >
+            CPU utilization on {{ $labels.instance }} is above 80% and rising. The server
+            still has some headroom but is under significant load. If unaddressed, this
+            may escalate to a critical CPU event impacting all hosted services.
+          action_item: >
+            1. Check top processes: Get-Process | Sort-Object CPU -Descending | Select-Object -First 5.
+            2. Review Windows Event Viewer for application errors.
+            3. Monitor trend in the Infrastructure dashboard — plan action if rising.
+          dashboard_url: "http://localhost:3000/d/enterprise-windows-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "100 - (avg by (instance, team) (rate(windows_cpu_time_total{mode=\"idle\"}[5m])) * 100)"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [80], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 4. Windows High Memory — CRITICAL (>90%)
+      # -----------------------------------------------------------------------
+      - uid: rule-windows-memory-critical
+        title: WindowsHighMemory
+        condition: C
+        for: 3m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Windows/OS Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Windows memory critically high on {{ $labels.instance }} (>90%)"
+          description: "Physical memory usage on {{ $labels.instance }} exceeds 90%."
+          root_cause: >
+            Physical RAM usage on {{ $labels.instance }} has exceeded 90%. Windows is likely
+            using the pagefile heavily, causing I/O thrashing and severe performance degradation
+            for all hosted applications. Possible causes: a memory leak in an application,
+            a large dataset loaded without bounds, too many concurrent processes, or the
+            server is undersized for its current workload.
+          action_item: >
+            1. Check top memory consumers: Get-Process | Sort-Object WorkingSet -Descending | Select-Object Name, WorkingSet -First 10.
+            2. Check for memory leaks (growing WorkingSet over time).
+            3. Restart the top memory-consuming service if it has a known leak.
+            4. Clear file system cache if appropriate: Set-StorageSetting -NewDiskHealthModel.
+            5. Plan a RAM upgrade if server is consistently memory-bound.
+            6. If pagefile is also full, reboot may be required during maintenance window.
+          dashboard_url: "http://localhost:3000/d/enterprise-windows-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "(1 - (windows_os_physical_memory_free_bytes / windows_cs_physical_memory_bytes)) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [90], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 5. Windows Memory Warning (>80%)
+      # -----------------------------------------------------------------------
+      - uid: rule-windows-memory-warning
+        title: WindowsMemoryWarning
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Windows/OS Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Windows memory elevated on {{ $labels.instance }} (>80%)"
+          description: "Physical memory usage on {{ $labels.instance }} is between 80-90%."
+          root_cause: >
+            Memory utilization on {{ $labels.instance }} is above 80%. The server is under
+            memory pressure but still functional. Continued growth will result in pagefile
+            usage and performance degradation.
+          action_item: >
+            1. Review memory trend in the Infrastructure dashboard.
+            2. Identify the largest memory consumers: Get-Process | Sort-Object WorkingSet -Descending | Select-Object -First 5.
+            3. Check if any scheduled tasks recently started that are memory-intensive.
+          dashboard_url: "http://localhost:3000/d/enterprise-windows-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "(1 - (windows_os_physical_memory_free_bytes / windows_cs_physical_memory_bytes)) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [80], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 6. Windows Disk Usage Critical (>90%)
+      # -----------------------------------------------------------------------
+      - uid: rule-windows-disk-critical
+        title: WindowsDiskCritical
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Windows/OS Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Windows disk >90% full on {{ $labels.instance }} (volume: {{ $labels.volume }})"
+          description: "Disk volume {{ $labels.volume }} on {{ $labels.instance }} is more than 90% full."
+          root_cause: >
+            Disk volume {{ $labels.volume }} on {{ $labels.instance }} is critically full (>90%).
+            Windows services writing to this volume (IIS logs, application logs, temp files,
+            database files) will begin to fail with "Not enough disk space" errors. If the
+            OS drive fills completely, the server may become unresponsive or crash.
+          action_item: >
+            1. Identify large files: Get-ChildItem -Path C:\ -Recurse -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select-Object -First 20 FullName, Length.
+            2. Clear Windows temp files: cleanmgr.exe /sagerun:1.
+            3. Archive or delete old IIS/application log files.
+            4. Check and rotate log files: C:\inetpub\logs, C:\Windows\Logs.
+            5. If database files are on this volume, alert the Database team immediately.
+            6. Add disk capacity or extend the volume partition if possible.
+          dashboard_url: "http://localhost:3000/d/enterprise-windows-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "(1 - windows_logical_disk_free_bytes{volume!~\"HarddiskVolume.*\"} / windows_logical_disk_size_bytes{volume!~\"HarddiskVolume.*\"}) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [90], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 7. Windows Disk Warning (>80%)
+      # -----------------------------------------------------------------------
+      - uid: rule-windows-disk-warning
+        title: WindowsDiskWarning
+        condition: C
+        for: 10m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Windows/OS Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Windows disk >80% full on {{ $labels.instance }} (volume: {{ $labels.volume }})"
+          description: "Disk volume {{ $labels.volume }} on {{ $labels.instance }} is between 80-90% full."
+          root_cause: >
+            Disk volume {{ $labels.volume }} on {{ $labels.instance }} is above 80% capacity.
+            At current usage, the volume will reach critical levels if log rotation, archival,
+            or cleanup is not performed proactively.
+          action_item: >
+            1. Review disk usage trend in the Infrastructure dashboard.
+            2. Run disk cleanup: cleanmgr.exe.
+            3. Archive logs older than 30 days.
+            4. Plan capacity expansion if growth trend is steady.
+          dashboard_url: "http://localhost:3000/d/enterprise-windows-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "(1 - windows_logical_disk_free_bytes{volume!~\"HarddiskVolume.*\"} / windows_logical_disk_size_bytes{volume!~\"HarddiskVolume.*\"}) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [80], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+  # ---------------------------------------------------------------------------
+  # Linux Infrastructure Alert Rules
+  # ---------------------------------------------------------------------------
+  - orgId: 1
+    name: Linux Infrastructure Alerts
+    folder: Infrastructure
+    interval: 1m
+    rules:
+
+      # -----------------------------------------------------------------------
+      # 8. Linux Server Down — CRITICAL
+      # -----------------------------------------------------------------------
+      - uid: rule-linux-server-down
+        title: LinuxServerDown
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: Alerting
+        execErrState: Alerting
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Linux Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Linux server {{ $labels.instance }} is unreachable"
+          description: "node_exporter on {{ $labels.instance }} has stopped reporting. Server may be down."
+          root_cause: >
+            The Node Exporter on Linux server {{ $labels.instance }} has stopped responding
+            to Prometheus scrapes. The server may be powered off, experiencing a kernel panic,
+            have a network failure, or the node_exporter service may have crashed. All services
+            hosted on this server are potentially unavailable.
+          action_item: >
+            1. Attempt to ping the server: ping {{ $labels.instance }}.
+            2. Try SSH access: ssh user@{{ $labels.instance }}.
+            3. Check if node_exporter is running: systemctl status node_exporter.
+            4. Restart exporter if server is accessible: sudo systemctl restart node_exporter.
+            5. Check system journal: sudo journalctl -xe | tail -50.
+            6. If server is unreachable, escalate to network/datacenter team immediately.
+          dashboard_url: "http://localhost:3000/d/enterprise-linux-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "up{job=~\"linux.*|node.*\"}"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [1], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 9. Linux High CPU — CRITICAL (>90%)
+      # avg by (instance, team) preserves the team label through aggregation
+      # -----------------------------------------------------------------------
+      - uid: rule-linux-cpu-critical
+        title: LinuxHighCPU
+        condition: C
+        for: 3m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Linux Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Linux CPU critically high on {{ $labels.instance }} (>90%)"
+          description: "CPU utilization on {{ $labels.instance }} has exceeded 90% for 3 minutes."
+          root_cause: >
+            CPU utilization on Linux server {{ $labels.instance }} has been above 90% for over
+            3 minutes. This level of CPU saturation causes severe process scheduling delays and
+            increases application response times dramatically. Possible causes: a runaway
+            process or fork bomb, a compilation or CI/CD job consuming all cores, a cron job
+            that has gone into an infinite loop, or a DDoS attack causing network packet processing overhead.
+          action_item: >
+            1. Identify top processes: top -bn1 | head -20 or ps aux --sort=-%cpu | head -15.
+            2. Check for zombie or defunct processes: ps aux | grep Z.
+            3. Look at system load average: uptime.
+            4. If a known service, restart it: sudo systemctl restart <service>.
+            5. If unknown process, kill it: sudo kill -9 <pid>.
+            6. Check cron jobs that may have started: sudo crontab -l && cat /etc/cron.d/*.
+          dashboard_url: "http://localhost:3000/d/enterprise-linux-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "100 - (avg by (instance, team) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [90], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 10. Linux CPU Warning (>80%)
+      # avg by (instance, team) preserves the team label through aggregation
+      # -----------------------------------------------------------------------
+      - uid: rule-linux-cpu-warning
+        title: LinuxCPUWarning
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Linux Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Linux CPU elevated on {{ $labels.instance }} (>80%)"
+          description: "CPU usage on {{ $labels.instance }} is between 80-90%."
+          root_cause: >
+            CPU utilization on {{ $labels.instance }} is above 80%. The server is under
+            elevated load but still operational. Monitor for escalation to critical.
+          action_item: >
+            1. Check top CPU consumers: ps aux --sort=-%cpu | head -10.
+            2. Review load average trend in the Infrastructure dashboard.
+            3. Evaluate if any batch jobs or scheduled tasks are contributing to the spike.
+          dashboard_url: "http://localhost:3000/d/enterprise-linux-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "100 - (avg by (instance, team) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [80], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 11. Linux High Memory — CRITICAL (>90%)
+      # -----------------------------------------------------------------------
+      - uid: rule-linux-memory-critical
+        title: LinuxHighMemory
+        condition: C
+        for: 3m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Linux Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Linux memory critically high on {{ $labels.instance }} (>90%)"
+          description: "Available memory on {{ $labels.instance }} has dropped below 10%."
+          root_cause: >
+            Linux server {{ $labels.instance }} has less than 10% available memory remaining.
+            The kernel OOM (Out-Of-Memory) killer may activate and terminate processes to free
+            memory. Applications hosted on this server face risk of being killed. Causes include
+            a memory leak in a long-running process, a large in-memory data operation (cache
+            load, sort), insufficient swap space, or the server is simply undersized.
+          action_item: >
+            1. Check memory usage: free -h and cat /proc/meminfo.
+            2. Identify top memory consumers: ps aux --sort=-%mem | head -10.
+            3. Check OOM killer history: sudo dmesg | grep -i "oom\|killed process".
+            4. Check swap usage: swapon --show.
+            5. If a known service is leaking, restart it: sudo systemctl restart <service>.
+            6. If critical, drop cached memory: sudo sync && sudo sysctl -w vm.drop_caches=3.
+          dashboard_url: "http://localhost:3000/d/enterprise-linux-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [90], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 12. Linux Memory Warning (>80%)
+      # -----------------------------------------------------------------------
+      - uid: rule-linux-memory-warning
+        title: LinuxMemoryWarning
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Linux Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Linux memory elevated on {{ $labels.instance }} (>80%)"
+          description: "Memory usage on {{ $labels.instance }} is between 80-90%."
+          root_cause: >
+            Memory utilization on {{ $labels.instance }} is above 80%. The system is under
+            memory pressure. If usage continues to grow, OOM risk increases.
+          action_item: >
+            1. Review memory trend in the Infrastructure dashboard.
+            2. Identify top memory processes: ps aux --sort=-%mem | head -5.
+            3. Check if swap is being used: free -h.
+          dashboard_url: "http://localhost:3000/d/enterprise-linux-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [80], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 13. Linux Disk Critical (>90%)
+      # -----------------------------------------------------------------------
+      - uid: rule-linux-disk-critical
+        title: LinuxDiskCritical
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Linux Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Linux disk >90% full on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+          description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is more than 90% full."
+          root_cause: >
+            Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is critically full (>90%).
+            Services writing to this filesystem (application logs, database writes, temp files)
+            will start failing with "No space left on device" errors. If the root filesystem
+            fills up, the server may become unresponsive.
+          action_item: >
+            1. Check disk usage: df -h {{ $labels.mountpoint }}.
+            2. Find large files: sudo du -sh /* 2>/dev/null | sort -rh | head -20.
+            3. Clear old logs: sudo find /var/log -name "*.log" -mtime +30 -delete.
+            4. Check for large core dumps: sudo find / -name "core" -size +100M.
+            5. Rotate application logs immediately.
+            6. If database files are on this mount, alert Database team.
+            7. Expand volume or add disk if structurally needed.
+          dashboard_url: "http://localhost:3000/d/enterprise-linux-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "(1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|fuse.lxcfs|squashfs|devtmpfs\",mountpoint!~\"/boot.*\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|fuse.lxcfs|squashfs|devtmpfs\",mountpoint!~\"/boot.*\"}) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [90], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 14. Linux Disk Warning (>80%)
+      # -----------------------------------------------------------------------
+      - uid: rule-linux-disk-warning
+        title: LinuxDiskWarning
+        condition: C
+        for: 10m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Linux Infrastructure Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Linux disk >80% full on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+          description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is between 80-90% full."
+          root_cause: >
+            Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is above 80% capacity.
+            Proactive cleanup or capacity planning is required to prevent reaching the critical
+            threshold.
+          action_item: >
+            1. Review disk trend in the Infrastructure dashboard.
+            2. Check for files to archive or remove: du -sh /var/log/* | sort -rh | head -10.
+            3. Set up or verify log rotation is running: logrotate -d /etc/logrotate.conf.
+            4. Plan capacity expansion if steady growth trend is confirmed.
+          dashboard_url: "http://localhost:3000/d/enterprise-linux-infrastructure"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "(1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|fuse.lxcfs|squashfs|devtmpfs\",mountpoint!~\"/boot.*\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|fuse.lxcfs|squashfs|devtmpfs\",mountpoint!~\"/boot.*\"}) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [80], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold

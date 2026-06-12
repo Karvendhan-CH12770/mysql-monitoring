@@ -1,4 +1,17 @@
-﻿apiVersion: 1
+apiVersion: 1
+
+# =============================================================================
+# Dashboard Providers
+#
+# WINDOWS SELF-HOSTED:
+#   After copying files to Grafana, the path below must match where you
+#   copied the provisioning folder.
+#   Default Grafana install:
+#     C:\monitoring\grafana\provisioning\dashboards\...
+#
+# DOCKER:
+#   Replace paths with:  /etc/grafana/provisioning/dashboards/...
+# =============================================================================
 
 providers:
 

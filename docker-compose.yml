@@ -15,7 +15,26 @@ services:
     ports:
       - "3000:3000"
     environment:
+      # ── Admin ──────────────────────────────────────────────────────────────
       - GF_SECURITY_ADMIN_PASSWORD=Admin@123
+
+      # ── Unified Alerting (Grafana 9+ built-in alerting engine) ─────────────
+      - GF_UNIFIED_ALERTING_ENABLED=true
+      - GF_ALERTING_ENABLED=false            # disable legacy alerting
+
+      # ── SMTP / Email ────────────────────────────────────────────────────────
+      # Replace placeholder values with your real SMTP credentials.
+      # For Gmail: use an App Password (not your account password).
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com:587
+      - GF_SMTP_USER=alerts@yourcompany.com
+      - GF_SMTP_PASSWORD=your-app-password
+      - GF_SMTP_FROM_ADDRESS=alerts@yourcompany.com
+      - GF_SMTP_FROM_NAME=Grafana Alerting
+      - GF_SMTP_STARTTLS_POLICY=MandatoryStartTLS
+
+      # ── Grafana base URL (used in alert email links) ────────────────────────
+      - GF_SERVER_ROOT_URL=http://localhost:3000
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning

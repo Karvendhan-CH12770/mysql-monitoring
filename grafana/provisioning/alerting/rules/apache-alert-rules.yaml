@@ -1,0 +1,426 @@
+apiVersion: 1
+
+# =============================================================================
+# Alert Rules — Apache & Nginx Web Tier
+# Folder: Application
+#
+# TEAM ROUTING:
+#   The `team` label is NOT hardcoded here. It flows automatically from the
+#   prometheus.yml scrape config target labels:
+#     apache_servers job  →  team: apache-team  →  routes to apache-team contact point
+#     nginx_servers job   →  team: web-team     →  routes to web-team contact point
+#
+# Rules:
+#   1. ApacheServerDown          (critical) — httpd process not responding
+#   2. ApacheHighWorkerUsage     (critical) — busy workers > 90%
+#   3. ApacheWorkerUsageWarning  (warning)  — busy workers > 75%
+#   4. ApacheLowIdleWorkers      (warning)  — idle workers < 5
+#   5. NginxServerDown           (critical) — nginx process not responding
+#   6. NginxHighActiveConnections(warning)  — active connections > 500
+#   7. NginxHighErrorRate        (critical) — 5xx error rate > 5%
+# =============================================================================
+
+groups:
+
+  # ---------------------------------------------------------------------------
+  # Apache Web Server Alert Rules
+  # ---------------------------------------------------------------------------
+  - orgId: 1
+    name: Apache Web Server Alerts
+    folder: Application
+    interval: 1m
+    rules:
+
+      # -----------------------------------------------------------------------
+      # 1. Apache Server Down — CRITICAL
+      # -----------------------------------------------------------------------
+      - uid: rule-apache-server-down
+        title: ApacheServerDown
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: Alerting
+        execErrState: Alerting
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Apache Web Server Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Apache server {{ $labels.instance }} is DOWN"
+          description: "Apache httpd on {{ $labels.instance }} has stopped responding to status checks."
+          root_cause: >
+            The Apache web server process on {{ $labels.instance }} is no longer responding.
+            The httpd service has either crashed, been killed by the OS (OOM killer), or a fatal
+            configuration error is preventing it from accepting connections. All incoming HTTP
+            requests to this server are being dropped or refused.
+          action_item: >
+            1. SSH to {{ $labels.instance }} and check service status: sudo systemctl status apache2 (or httpd).
+            2. Review error logs: sudo tail -100 /var/log/apache2/error.log.
+            3. If crashed, restart: sudo systemctl restart apache2.
+            4. Validate configuration before restart: sudo apachectl configtest.
+            5. Check OS-level kills: sudo dmesg | grep -i "oom" or "killed".
+            6. Escalate to team lead if restart fails after 2 attempts.
+          dashboard_url: "http://localhost:3000/d/enterprise-apache-web-tier"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: apache_up
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [1], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 2. Apache High Worker Usage — CRITICAL (>90%)
+      # -----------------------------------------------------------------------
+      - uid: rule-apache-worker-critical
+        title: ApacheHighWorkerUsage
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Apache Web Server Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Apache worker utilization is critically high on {{ $labels.instance }}"
+          description: "Apache busy worker ratio exceeds 90% on {{ $labels.instance }}."
+          root_cause: >
+            Apache worker thread utilization on {{ $labels.instance }} has exceeded 90%.
+            The server is running out of available workers to handle new incoming HTTP requests.
+            New connections are being queued or rejected, causing latency spikes and potential
+            request failures. Possible causes: a traffic surge, slow upstream dependencies
+            (database, cache) blocking workers, or too few MaxRequestWorkers configured.
+          action_item: >
+            1. Check current worker state: apachectl status or curl http://localhost/server-status.
+            2. Identify long-running requests holding workers: look for slow queries or upstream timeouts.
+            3. Check Apache configuration: grep -i MaxRequestWorkers /etc/apache2/apache2.conf.
+            4. Consider increasing MaxRequestWorkers if server RAM allows.
+            5. Investigate upstream services (DB, cache) for performance degradation.
+            6. If traffic is legitimate, initiate horizontal scaling procedures.
+          dashboard_url: "http://localhost:3000/d/enterprise-apache-web-tier"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "apache_workers{state=\"busy\"} / (apache_workers{state=\"busy\"} + apache_workers{state=\"idle\"}) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [90], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 3. Apache Worker Usage Warning (>75%)
+      # -----------------------------------------------------------------------
+      - uid: rule-apache-worker-warning
+        title: ApacheWorkerUsageWarning
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Apache Web Server Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Apache worker utilization elevated on {{ $labels.instance }} (>75%)"
+          description: "Apache busy worker ratio is between 75-90% on {{ $labels.instance }}."
+          root_cause: >
+            Apache worker utilization on {{ $labels.instance }} has risen above 75%.
+            While the server is still handling requests, headroom is limited. If traffic
+            continues to grow or upstream latency increases, worker exhaustion (critical)
+            could occur within minutes.
+          action_item: >
+            1. Monitor the worker trend in the Apache dashboard — check if it is rising.
+            2. Review current active connections: apachectl status.
+            3. Check for slow requests or upstream bottlenecks in error.log.
+            4. Pre-emptively plan to increase MaxRequestWorkers or scale if trend is upward.
+          dashboard_url: "http://localhost:3000/d/enterprise-apache-web-tier"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "apache_workers{state=\"busy\"} / (apache_workers{state=\"busy\"} + apache_workers{state=\"idle\"}) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [75], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 4. Apache Low Idle Workers — WARNING
+      # -----------------------------------------------------------------------
+      - uid: rule-apache-low-idle-workers
+        title: ApacheLowIdleWorkers
+        condition: C
+        for: 3m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Apache Web Server Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Apache idle workers critically low on {{ $labels.instance }} (<5)"
+          description: "Fewer than 5 idle workers available on {{ $labels.instance }}."
+          root_cause: >
+            Only a small number of idle Apache workers remain on {{ $labels.instance }}.
+            With insufficient idle workers, new incoming connections will be queued or dropped.
+            This indicates the server is near capacity and a burst in traffic could cause an
+            outage. Slow backend responses are the most common cause of worker starvation.
+          action_item: >
+            1. Immediately check server-status for request queue depth.
+            2. Identify and terminate any hung or exceptionally long-running requests.
+            3. Check slow query logs on the database to find upstream bottlenecks.
+            4. If persistent, increase MinSpareWorkers and MaxRequestWorkers in config.
+          dashboard_url: "http://localhost:3000/d/enterprise-apache-web-tier"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "apache_workers{state=\"idle\"}"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [5], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+  # ---------------------------------------------------------------------------
+  # Nginx Web Server Alert Rules
+  # ---------------------------------------------------------------------------
+  - orgId: 1
+    name: Nginx Web Server Alerts
+    folder: Application
+    interval: 1m
+    rules:
+
+      # -----------------------------------------------------------------------
+      # 5. Nginx Server Down — CRITICAL
+      # -----------------------------------------------------------------------
+      - uid: rule-nginx-server-down
+        title: NginxServerDown
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: Alerting
+        execErrState: Alerting
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Nginx Web Server Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Nginx server {{ $labels.instance }} is DOWN"
+          description: "Nginx on {{ $labels.instance }} is not responding to status checks."
+          root_cause: >
+            The Nginx web server process on {{ $labels.instance }} has stopped responding.
+            All HTTP/HTTPS traffic to this server is being dropped. This may indicate a
+            process crash, out-of-memory kill, failed reload due to configuration error,
+            or a network connectivity issue to the exporter endpoint.
+          action_item: >
+            1. SSH to {{ $labels.instance }} and check: sudo systemctl status nginx.
+            2. Review error logs: sudo tail -100 /var/log/nginx/error.log.
+            3. Test configuration: sudo nginx -t.
+            4. Restart if safe to do so: sudo systemctl restart nginx.
+            5. Verify port 80/443 are listening: sudo ss -tlnp | grep nginx.
+            6. Check for OOM events: sudo journalctl -xe | grep nginx.
+          dashboard_url: "http://localhost:3000/d/enterprise-nginx-web-tier"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "nginx_up"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [1], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 6. Nginx High Active Connections — WARNING (>500)
+      # -----------------------------------------------------------------------
+      - uid: rule-nginx-high-connections
+        title: NginxHighActiveConnections
+        condition: C
+        for: 5m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          dashboard_name: Nginx Web Server Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Nginx active connections high on {{ $labels.instance }} (>500)"
+          description: "Nginx has more than 500 active connections on {{ $labels.instance }}."
+          root_cause: >
+            The number of active connections on Nginx {{ $labels.instance }} has exceeded 500.
+            This could indicate a traffic surge, connection leaks (clients not closing connections),
+            or slow upstream backend responses causing connections to stay open longer than expected.
+            If unchecked, this could lead to worker_connections exhaustion.
+          action_item: >
+            1. Check current connections: sudo nginx -T | grep worker_connections.
+            2. Review access logs for unusual traffic patterns: sudo tail -200 /var/log/nginx/access.log.
+            3. Check upstream backend response times in the Nginx dashboard.
+            4. If legitimate traffic growth, plan capacity increase.
+          dashboard_url: "http://localhost:3000/d/enterprise-nginx-web-tier"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "nginx_connections_active"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [500], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold
+
+      # -----------------------------------------------------------------------
+      # 7. Nginx High Error Rate — CRITICAL (5xx > 5%)
+      # NOTE: Requires nginx-module-vts or nginx-prometheus-exporter with
+      #       extended metrics enabled to expose per-status-code counters.
+      #       Metric: nginx_server_requests{code="5xx"} from nginx-vts-exporter
+      # -----------------------------------------------------------------------
+      - uid: rule-nginx-high-error-rate
+        title: NginxHighErrorRate
+        condition: C
+        for: 2m
+        isPaused: false
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          dashboard_name: Nginx Web Server Monitoring
+          host: "{{ $labels.instance }}"
+          summary: "Nginx 5xx error rate critically high on {{ $labels.instance }} (>5%)"
+          description: "More than 5% of Nginx responses on {{ $labels.instance }} are 5xx server errors."
+          root_cause: >
+            Nginx on {{ $labels.instance }} is returning 5xx error responses to more than 5%
+            of requests. This means the upstream backend (Node.js, PHP-FPM, or other app server)
+            is failing to handle requests. Possible causes: the upstream application crashed or
+            is returning 500 errors due to an unhandled exception, the upstream connection pool
+            is exhausted causing Nginx to return 502/503, or the upstream response time is
+            exceeding the proxy_read_timeout causing 504 Gateway Timeout errors.
+          action_item: >
+            1. Check Nginx error log: sudo tail -100 /var/log/nginx/error.log.
+            2. Check the upstream application logs for exceptions or crashes.
+            3. Verify upstream service is running: sudo systemctl status <upstream-service>.
+            4. Check Nginx upstream configuration: nginx -T | grep upstream.
+            5. If upstream is down, restart it: sudo systemctl restart <upstream-service>.
+            6. Check for 502/504 patterns — if 504, increase proxy_read_timeout.
+          dashboard_url: "http://localhost:3000/d/enterprise-nginx-web-tier"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus-uid
+            model:
+              datasource: {type: prometheus, uid: prometheus-uid}
+              expr: "sum by (instance, team) (rate(nginx_server_requests{code=\"5xx\"}[5m])) / sum by (instance, team) (rate(nginx_server_requests[5m])) * 100"
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [5], type: gt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {type: last, params: []}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: threshold

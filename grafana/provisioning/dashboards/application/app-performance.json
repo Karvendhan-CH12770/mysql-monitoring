@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Enterprise application performance monitoring — request rate, latency percentiles, error rate, active connections. Supports PHP and Node.js via $application dropdown.",
+  "description": "Enterprise application performance monitoring ï¿½ request rate, latency percentiles, error rate, active connections. Supports PHP and Node.js via $application dropdown.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -101,7 +101,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "refId": "A"
         }
       ],
@@ -226,7 +226,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "refId": "A"
         }
       ],
@@ -468,19 +468,19 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.50, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "legendFormat": "{{application}} - p50",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.95, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "legendFormat": "{{application}} - p95",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.99, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "legendFormat": "{{application}} - p99",
           "refId": "C"
         }
@@ -757,7 +757,7 @@
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.99, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "format": "table",
           "instant": true,
           "refId": "P99"

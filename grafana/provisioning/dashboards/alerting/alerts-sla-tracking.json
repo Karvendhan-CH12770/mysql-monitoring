@@ -1,4 +1,4 @@
-﻿{
+{
   "annotations": {
     "list": [
       {
@@ -30,7 +30,7 @@
   "templating": {
     "list": [
       {
-        "current": { "text": "Prometheus", "value": "prometheus-uid" },
+        "current": {},
         "includeAll": false,
         "label": "Data Source",
         "name": "datasource",
@@ -95,7 +95,7 @@
       "title": "Total Firing Alerts",
       "description": "Number of alerts currently in firing state across all teams",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "colorMode": "background",
         "graphMode": "none",
@@ -121,7 +121,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "count(ALERTS{alertstate=\"firing\"}) or vector(0)",
           "instant": true,
           "legendFormat": "Firing",
@@ -136,7 +136,7 @@
       "title": "Critical Alerts",
       "description": "Alerts with severity=critical currently firing",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "colorMode": "background",
         "graphMode": "none",
@@ -162,7 +162,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "count(ALERTS{alertstate=\"firing\",severity=\"critical\"}) or vector(0)",
           "instant": true,
           "legendFormat": "Critical",
@@ -177,7 +177,7 @@
       "title": "Warning Alerts",
       "description": "Alerts with severity=warning currently firing",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "colorMode": "background",
         "graphMode": "none",
@@ -203,7 +203,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "count(ALERTS{alertstate=\"firing\",severity=\"warning\"}) or vector(0)",
           "instant": true,
           "legendFormat": "Warning",
@@ -218,7 +218,7 @@
       "title": "Servers Online",
       "description": "Percentage of all monitored servers currently reachable",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "colorMode": "background",
         "graphMode": "none",
@@ -247,7 +247,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "count(up == 1) / count(up) * 100",
           "instant": true,
           "legendFormat": "Online %",
@@ -295,7 +295,7 @@
       "type": "gauge",
       "title": "Windows Servers",
       "gridPos": { "h": 7, "w": 4, "x": 0, "y": 14 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
@@ -324,7 +324,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "avg_over_time(up{job=~\"$windows_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
@@ -338,7 +338,7 @@
       "type": "gauge",
       "title": "Linux Servers",
       "gridPos": { "h": 7, "w": 4, "x": 4, "y": 14 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
@@ -367,7 +367,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "avg_over_time(up{job=~\"$linux_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
@@ -381,7 +381,7 @@
       "type": "gauge",
       "title": "Apache Servers",
       "gridPos": { "h": 7, "w": 4, "x": 8, "y": 14 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
@@ -410,7 +410,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "avg_over_time(up{job=~\"$apache_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
@@ -424,7 +424,7 @@
       "type": "gauge",
       "title": "Nginx Servers",
       "gridPos": { "h": 7, "w": 4, "x": 12, "y": 14 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
@@ -453,7 +453,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "avg_over_time(up{job=~\"$nginx_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
@@ -467,7 +467,7 @@
       "type": "gauge",
       "title": "Database Servers",
       "gridPos": { "h": 7, "w": 4, "x": 16, "y": 14 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
@@ -496,7 +496,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "avg_over_time(up{job=~\"mysql_servers|mssql_servers|postgres_servers\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
@@ -510,7 +510,7 @@
       "type": "gauge",
       "title": "Node.js Applications",
       "gridPos": { "h": 7, "w": 4, "x": 20, "y": 14 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
@@ -539,7 +539,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "avg_over_time(up{job=~\"$nodejs_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
@@ -562,7 +562,7 @@
       "title": "Per-Server Uptime — Live Status",
       "description": "Current up/down status for every monitored target with team and environment labels",
       "gridPos": { "h": 9, "w": 13, "x": 0, "y": 22 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "cellHeight": "sm",
         "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
@@ -609,7 +609,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "up",
           "instant": true,
           "legendFormat": "",
@@ -633,7 +633,7 @@
       "title": "Firing Alert Duration — Currently Firing (seconds)",
       "description": "Time each alert has been continuously firing. Longer bars = older unresolved alerts.",
       "gridPos": { "h": 9, "w": 11, "x": 13, "y": 22 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "barRadius": 0.03,
         "barWidth": 0.7,
@@ -659,7 +659,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "sort_desc(time() - ALERTS_FOR_STATE)",
           "instant": true,
           "legendFormat": "{{alertname}} | {{team}}",
@@ -682,7 +682,7 @@
       "title": "Alert Firing Timeline — All Alerts",
       "description": "Shows when each alert was firing over the selected time range. Each line = one alert rule + instance.",
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 32 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "legend": { "calcs": [], "displayMode": "table", "placement": "right", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
@@ -723,7 +723,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "ALERTS{alertstate=\"firing\"}",
           "legendFormat": "{{alertname}} | {{team}} | {{severity}}",
           "refId": "A"
@@ -737,7 +737,7 @@
       "title": "Server Availability Timeline — All Servers",
       "description": "1 = server is UP and reachable, 0 = server is DOWN. Gaps indicate no data from exporter.",
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 41 },
-      "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": {
         "legend": { "calcs": ["mean", "min"], "displayMode": "table", "placement": "right", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
@@ -780,7 +780,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "expr": "up",
           "legendFormat": "{{server_name}} ({{team}})",
           "refId": "A"

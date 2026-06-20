@@ -1,4 +1,4 @@
-﻿{
+{
   "annotations": {
     "list": [
       {
@@ -993,7 +993,7 @@
   "templating": {
     "list": [
       {
-        "current": { "text": "Prometheus", "value": "prometheus-uid" },
+        "current": {},
         "includeAll": false,
         "label": "Data Source",
         "name": "datasource",

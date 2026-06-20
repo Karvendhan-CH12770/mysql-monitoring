@@ -16,7 +16,6 @@ apiVersion: 1
 #   2. MySQLHighConnectionUsage   (critical) — connections > 90%
 #   3. MySQLConnectionUsageWarning(warning)  — connections > 75%
 #   4. MySQLSlowQueriesHigh       (warning)  — slow query rate > 5/min
-#   5. MySQLReplicationLagHigh    (critical) — replication lag > 30s
 #
 # PostgreSQL Rules:
 #   6. PostgreSQLDown             (critical) — postgres not responding
@@ -58,7 +57,7 @@ groups:
             resulting in service degradation or complete outage. Possible causes include:
             mysqld process crash, disk space exhaustion preventing InnoDB operations,
             max_connections limit causing a hang, corrupted data files, or an OOM kill.
-          action_item: >
+          action_item: |
             1. SSH to {{ $labels.instance }} and check: sudo systemctl status mysql.
             2. Check MySQL error log: sudo tail -200 /var/log/mysql/error.log.
             3. Check disk space: df -h /var/lib/mysql.
@@ -115,7 +114,7 @@ groups:
             error, causing application errors. Causes: connection leaks (connections not returned
             to pool), long-running transactions holding connections, traffic spike exceeding pool
             capacity, or max_connections configured too low for current workload.
-          action_item: >
+          action_item: |
             1. Check current connection count: SHOW STATUS LIKE 'Threads_connected'; and SHOW VARIABLES LIKE 'max_connections';
             2. Find connection-heavy clients: SELECT user, host, count(*) FROM information_schema.processlist GROUP BY user, host;
             3. Kill idle/sleeping connections older than 1 hour: use pt-kill or manual KILL.
@@ -170,7 +169,7 @@ groups:
             The server is still accepting connections, but the system is approaching saturation.
             If connection count continues to grow or does not decrease, a critical threshold
             breach and connection refusals will occur.
-          action_item: >
+          action_item: |
             1. Monitor the connection trend in the MySQL dashboard.
             2. Review connection pool settings in the application (max pool size, idle timeout).
             3. Identify top connection consumers: SELECT user, host, count(*) FROM information_schema.processlist GROUP BY 1,2;
@@ -224,7 +223,7 @@ groups:
             include missing indexes on frequently queried columns, full table scans on large
             tables, suboptimal query plans from stale statistics, or lock contention causing
             queries to wait before executing.
-          action_item: >
+          action_item: |
             1. Enable and check slow query log: SHOW VARIABLES LIKE 'slow_query_log%';
             2. Analyze top slow queries: use pt-query-digest or mysqldumpslow /var/log/mysql/slow.log.
             3. Run EXPLAIN on the identified slow queries to check query plans.
@@ -257,61 +256,6 @@ groups:
               refId: C
               type: threshold
 
-      # -----------------------------------------------------------------------
-      # 5. MySQL Replication Lag High — CRITICAL (>30s)
-      # -----------------------------------------------------------------------
-      - uid: rule-mysql-replication-lag
-        title: MySQLReplicationLagHigh
-        condition: C
-        for: 2m
-        isPaused: false
-        noDataState: NoData
-        execErrState: Error
-        labels:
-          severity: critical
-        annotations:
-          dashboard_name: MySQL Performance Monitoring
-          host: "{{ $labels.instance }}"
-          summary: "MySQL replication lag >30s on {{ $labels.instance }}"
-          description: "MySQL replica {{ $labels.instance }} is lagging more than 30 seconds behind the primary."
-          root_cause: >
-            MySQL replication on {{ $labels.instance }} has fallen more than 30 seconds behind
-            the primary server. Applications reading from this replica may receive stale data.
-            Causes include: long-running queries on the primary blocking the replica's SQL thread,
-            high write load on the primary exceeding the replica's ability to apply changes,
-            network latency between primary and replica, or a replica SQL thread error/crash.
-          action_item: >
-            1. Check replica status: SHOW SLAVE STATUS\G (look at Seconds_Behind_Master).
-            2. Check if SQL thread is running: look for Slave_SQL_Running: Yes.
-            3. Identify blocking queries on replica: SHOW PROCESSLIST;
-            4. Review replica error log for SQL thread failures.
-            5. If lag is growing, consider routing read traffic temporarily to primary.
-            6. If replica is severely behind, evaluate STOP SLAVE; SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START SLAVE; (with DBA approval only).
-          dashboard_url: "http://localhost:3000/d/enterprise-mysql-performance"
-        data:
-          - refId: A
-            relativeTimeRange: {from: 300, to: 0}
-            datasourceUid: prometheus-uid
-            model:
-              datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "mysql_slave_status_seconds_behind_master"
-              instant: true
-              intervalMs: 1000
-              maxDataPoints: 43200
-              refId: A
-          - refId: C
-            datasourceUid: __expr__
-            model:
-              conditions:
-                - evaluator: {params: [30], type: gt}
-                  operator: {type: and}
-                  query: {params: [A]}
-                  reducer: {type: last, params: []}
-                  type: query
-              datasource: {type: __expr__, uid: __expr__}
-              expression: A
-              refId: C
-              type: threshold
 
   # ---------------------------------------------------------------------------
   # PostgreSQL Alert Rules
@@ -345,7 +289,7 @@ groups:
             causes include: postmaster process crash, disk space exhausted on the data directory,
             max_connections reached causing a deadlock, an unrecoverable WAL corruption, or an
             OOM kill terminating the postgres process.
-          action_item: >
+          action_item: |
             1. SSH to {{ $labels.instance }}: sudo systemctl status postgresql.
             2. Check data directory disk: df -h $(psql -U postgres -t -c "SHOW data_directory;").
             3. Review PostgreSQL logs: sudo tail -200 /var/log/postgresql/postgresql-*.log.
@@ -402,7 +346,7 @@ groups:
             "FATAL: remaining connection slots are reserved" errors. This is commonly caused
             by application connection pools not releasing idle connections, or a sudden traffic
             increase without a connection pooler (PgBouncer) in place.
-          action_item: >
+          action_item: |
             1. Check: SELECT count(*), state FROM pg_stat_activity GROUP BY state;
             2. Identify idle connections: SELECT pid, usename, application_name, state, query_start FROM pg_stat_activity WHERE state = 'idle' ORDER BY query_start;
             3. Terminate long-idle connections: SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state='idle' AND query_start < now() - interval '30 minutes';
@@ -415,7 +359,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "sum by (instance, team) (pg_stat_activity_count) / on(instance, team) pg_settings_max_connections * 100"
+              expr: "sum by (instance, team) (pg_stat_activity_count{job=\"postgres_servers\"}) / sum by (instance, team) (pg_settings_max_connections{job=\"postgres_servers\"}) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -458,7 +402,7 @@ groups:
             overall database performance. Causes include: missing indexes causing sequential
             scans on large tables, full table joins without appropriate query planning hints,
             or an accidental runaway query in a development or ETL workflow.
-          action_item: >
+          action_item: |
             1. Identify the query: SELECT pid, now() - pg_stat_activity.query_start AS duration, query, state FROM pg_stat_activity WHERE state != 'idle' AND (now() - pg_stat_activity.query_start) > interval '5 minutes';
             2. Assess whether the query is expected (ETL job, report) or accidental.
             3. If unexpected, cancel it: SELECT pg_cancel_backend(pid); (soft) or SELECT pg_terminate_backend(pid); (hard).

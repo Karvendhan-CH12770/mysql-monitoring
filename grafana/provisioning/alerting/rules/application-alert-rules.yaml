@@ -64,7 +64,7 @@ groups:
             an upstream dependency (database, cache, external API) becoming unavailable,
             an out-of-memory condition causing request processing failures, or invalid
             configuration causing handlers to throw errors.
-          action_item: >
+          action_item: |
             1. Check application error logs immediately: sudo journalctl -u app -n 200 --no-pager or check /var/log/app/*.log.
             2. Look for exception stack traces — identify the failing endpoint or function.
             3. Check if a recent deployment correlates with the error spike (compare with deploy timeline in dashboard).
@@ -121,7 +121,7 @@ groups:
             increasing number of user requests are failing server-side. This could indicate
             an emerging issue with an upstream dependency, a memory pressure situation,
             or intermittent exceptions in specific code paths triggered by certain inputs.
-          action_item: >
+          action_item: |
             1. Check error logs for patterns: are errors concentrated on specific endpoints?
             2. Review error rate trend — is it growing or stable?
             3. Verify upstream dependencies are healthy.
@@ -177,7 +177,7 @@ groups:
             a proper index, an external API dependency with increased response times, CPU or memory
             saturation causing queuing of request processing, or a garbage collection pause in the
             application runtime.
-          action_item: >
+          action_item: |
             1. Review slow request traces in APM or application logs.
             2. Check database slow query log for queries taking >100ms.
             3. Verify external API dependencies: check their response times and error rates.
@@ -233,7 +233,7 @@ groups:
             is still functional, a noticeable portion of user requests are experiencing
             slow responses that may be causing user frustration. This may escalate to
             the critical threshold if not addressed.
-          action_item: >
+          action_item: |
             1. Check the latency trend in the Application Performance dashboard.
             2. Review database query performance — look for queries >50ms.
             3. Check for increased traffic volume that might be causing resource saturation.
@@ -285,7 +285,7 @@ groups:
             stopped responding to Prometheus scrapes. The service may have crashed due to
             an unhandled exception, been killed by the OOM killer, experienced a fatal
             configuration error on startup, or the host itself may be unreachable.
-          action_item: >
+          action_item: |
             1. Check service status: sudo systemctl status {{ $labels.job }}.
             2. Review application logs for the crash reason: sudo journalctl -u {{ $labels.job }} -n 100.
             3. Check for OOM kills: sudo dmesg | grep -i killed.
@@ -342,7 +342,7 @@ groups:
             but the volume is above typical operating levels. This may indicate a marketing
             campaign, a traffic redistribution from another instance failing, or a client
             misconfiguration sending duplicate requests.
-          action_item: >
+          action_item: |
             1. Review the Application Performance dashboard for latency and error rate impact.
             2. Verify the traffic is legitimate — check traffic source distribution.
             3. Monitor worker/thread pool utilization to ensure it is not nearing saturation.
@@ -397,22 +397,22 @@ groups:
         annotations:
           dashboard_name: Node.js Runtime Monitoring
           host: "{{ $labels.instance }}"
-          summary: "Node.js heap memory critically high on {{ $labels.instance }} (>90%)"
-          description: "Node.js V8 heap usage on {{ $labels.instance }} exceeds 90% of the heap limit."
+          summary: "Node.js heap memory critically high on {{ $labels.instance }} (>1200 MB)"
+          description: "Node.js heap on {{ $labels.instance }} exceeds 1200 MB — PM2 will force-restart the worker at 1500 MB."
           root_cause: >
-            The Node.js V8 heap on {{ $labels.instance }} is more than 90% full. The process
-            is at risk of crashing with "FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed
-            - JavaScript heap out of memory". This is almost always caused by a memory leak —
-            objects accumulating in memory without being garbage collected. Common sources:
-            event listener accumulation without removal, circular references, large in-memory
-            caches without TTL/eviction, or stream buffers not being consumed.
-          action_item: >
-            1. Trigger a manual GC if possible: global.gc() if --expose-gc flag is set.
-            2. Immediately increase heap limit as a temporary measure: NODE_OPTIONS=--max-old-space-size=4096.
-            3. Take a heap snapshot for analysis: node --heapsnapshot-signal=SIGUSR2 or use clinic.js.
-            4. Analyze the snapshot in Chrome DevTools to identify the retaining path.
-            5. Review recent code changes for new in-memory caches or unbounded data structures.
-            6. Plan a rolling restart of the application to clear the heap as an emergency measure.
+            Node.js worker on {{ $labels.instance }} is currently using {{ $values.A.Value | printf "%.0f" }} MB
+            of heap (critical threshold: 1200 MB, PM2 restart: 1500 MB). PM2 will kill and restart
+            this worker at 1500 MB causing a brief service interruption. Root causes: memory leak
+            accumulating objects across requests (event listeners not removed, Prisma result sets
+            held in closures, unbounded in-memory caches), or a large one-time data load not released.
+          action_item: |
+            1. Check current heap: pm2 monit — identify which worker(s) are near 1500 MB.
+            2. Review Winston error logs for OOM or heap warnings: tail -100 /var/www/corrodlp-backend/production/logs/errors/error-app-$(date +%F).log
+            3. Take a heap snapshot before PM2 restarts: kill -USR2 <worker_pid> (if --heapsnapshot-signal configured).
+            4. Check for Prisma result sets held in memory — large findMany() calls without pagination.
+            5. Check for unbounded in-memory caches or session stores accumulating data.
+            6. If worker restarts are imminent, PM2 will handle them — verify: pm2 logs corrodlp-backend.
+            7. Long-term: profile with clinic.js or node --inspect to identify the retaining path.
           dashboard_url: "http://localhost:3000/d/enterprise-nodejs-runtime"
         data:
           - refId: A
@@ -420,7 +420,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "nodejs_heap_size_used_bytes / nodejs_heap_size_total_bytes * 100"
+              expr: "avg by (instance, team) (nodejs_nodejs_heap_size_used_bytes{job=\"nodejs_applications\"}) / 1024 / 1024 and on(instance) up{job=\"nodejs_applications\"} == 1"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -429,7 +429,7 @@ groups:
             datasourceUid: __expr__
             model:
               conditions:
-                - evaluator: {params: [90], type: gt}
+                - evaluator: {params: [1200], type: gt}
                   operator: {type: and}
                   query: {params: [A]}
                   reducer: {type: last, params: []}
@@ -454,17 +454,19 @@ groups:
         annotations:
           dashboard_name: Node.js Runtime Monitoring
           host: "{{ $labels.instance }}"
-          summary: "Node.js heap memory elevated on {{ $labels.instance }} (>75%)"
-          description: "Node.js V8 heap usage on {{ $labels.instance }} is between 75-90%."
+          summary: "Node.js heap memory elevated on {{ $labels.instance }} (>750 MB)"
+          description: "Node.js heap on {{ $labels.instance }} is between 750 MB–1200 MB. PM2 restarts at 1500 MB."
           root_cause: >
-            Node.js heap utilization on {{ $labels.instance }} is above 75%. GC pressure is
-            increasing and if the heap continues to grow, a critical OOM event may follow.
-            Monitor for steady growth which indicates a memory leak pattern.
-          action_item: >
-            1. Check heap growth trend in the Node.js Runtime dashboard.
-            2. Review if any new in-memory caches or large data structures were recently added.
-            3. Monitor GC pause frequency — high GC activity alongside growth = likely leak.
-            4. Plan to take a heap snapshot during the next maintenance window.
+            Node.js worker on {{ $labels.instance }} is currently using {{ $values.A.Value | printf "%.0f" }} MB
+            of heap (warning threshold: 750 MB, PM2 restart: 1500 MB). The application is functional
+            but heap is growing above the typical idle baseline of ~40 MB. Under load this may be
+            expected, but if the server is idle this indicates an early memory leak.
+          action_item: |
+            1. Check heap trend over the last 2 hours in the Node.js Runtime dashboard — is it climbing?
+            2. Run: pm2 monit — check worker memory column.
+            3. Look for recent deployments that added new in-memory state (caches, middleware, Prisma).
+            4. Check for large un-paginated queries: grep -r "findMany" /var/www/corrodlp-backend/production/src.
+            5. Monitor — if heap stabilises below 1200 MB, no action needed.
           dashboard_url: "http://localhost:3000/d/enterprise-nodejs-runtime"
         data:
           - refId: A
@@ -472,7 +474,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "nodejs_heap_size_used_bytes / nodejs_heap_size_total_bytes * 100"
+              expr: "avg by (instance, team) (nodejs_nodejs_heap_size_used_bytes{job=\"nodejs_applications\"}) / 1024 / 1024 and on(instance) up{job=\"nodejs_applications\"} == 1"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -481,7 +483,7 @@ groups:
             datasourceUid: __expr__
             model:
               conditions:
-                - evaluator: {params: [75], type: gt}
+                - evaluator: {params: [750], type: gt}
                   operator: {type: and}
                   query: {params: [A]}
                   reducer: {type: last, params: []}
@@ -515,7 +517,7 @@ groups:
             Causes include: CPU-intensive synchronous operations blocking the loop (large
             JSON serialization, heavy crypto operations without worker threads), I/O
             starvation, or excessive microtask queue depth.
-          action_item: >
+          action_item: |
             1. Identify blocking synchronous operations: use clinic.js flame or 0x profiler.
             2. Check for synchronous file I/O calls (fs.readFileSync, etc.) in hot code paths.
             3. Move CPU-intensive operations to worker_threads (crypto, compression, parsing).
@@ -528,7 +530,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "nodejs_eventloop_lag_seconds * 1000"
+              expr: "nodejs_nodejs_eventloop_lag_seconds{job=\"nodejs_applications\"} * 1000"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -570,7 +572,7 @@ groups:
             the event loop is continuously busy with CPU-bound tasks, leaving insufficient
             time to process I/O events and handle new requests. This causes event loop lag
             and request queuing.
-          action_item: >
+          action_item: |
             1. Profile the application: node --prof app.js and process with node --prof-process.
             2. Use clinic.js flame to visualize hot functions.
             3. Identify if the spike is caused by a specific request pattern or background task.
@@ -583,7 +585,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "rate(process_cpu_seconds_total{job=~\"nodejs.*\"}[5m]) * 100"
+              expr: "sum by (instance, team) (rate(nodejs_process_cpu_seconds_total{job=\"nodejs_applications\"}[5m])) / 10 and on(instance) up{job=\"nodejs_applications\"} == 1"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200

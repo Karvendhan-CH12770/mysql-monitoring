@@ -60,7 +60,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum(rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -101,7 +101,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "refId": "A"
         }
       ],
@@ -144,7 +144,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) * 100",
+          "expr": "sum(rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) * 100",
           "refId": "A"
         }
       ],
@@ -185,7 +185,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(http_active_connections{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "sum(http_active_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "refId": "A"
         }
       ],
@@ -226,7 +226,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "refId": "A"
         }
       ],
@@ -266,7 +266,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[1h]))",
+          "expr": "sum(increase(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[1h]))",
           "refId": "A"
         }
       ],
@@ -309,7 +309,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "{{application}}",
           "refId": "A"
         }
@@ -345,7 +345,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application, method) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application, method) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "{{application}} - {{method}}",
           "refId": "A"
         }
@@ -381,7 +381,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application, status) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application, status) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "{{application}} - {{status}}",
           "refId": "A"
         }
@@ -416,7 +416,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (http_active_connections{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "sum by (application) (http_active_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "{{application}}",
           "refId": "A"
         }
@@ -468,19 +468,19 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.50, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "legendFormat": "{{application}} - p50",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.95, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "legendFormat": "{{application}} - p95",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.99, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "legendFormat": "{{application}} - p99",
           "refId": "C"
         }
@@ -516,7 +516,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application, route) (rate(http_request_duration_seconds_sum{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) / sum by (application, route) (rate(http_request_duration_seconds_count{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application, route) (rate(http_request_duration_seconds_sum{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) / sum by (application, route) (rate(http_request_duration_seconds_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "{{application}} - {{route}}",
           "refId": "A"
         }
@@ -552,7 +552,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(10, sum by (application, route) (rate(http_request_duration_seconds_sum{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) / sum by (application, route) (rate(http_request_duration_seconds_count{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])))",
+          "expr": "topk(10, sum by (application, route) (rate(http_request_duration_seconds_sum{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) / sum by (application, route) (rate(http_request_duration_seconds_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])))",
           "legendFormat": "{{application}} - {{route}}",
           "refId": "A"
         }
@@ -606,13 +606,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"5..\"}[5m])) / sum by (application) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) * 100",
+          "expr": "sum by (application) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"5..\"}[5m])) / sum by (application) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) * 100",
           "legendFormat": "{{application}} - 5xx %",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"4..\"}[5m])) / sum by (application) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) * 100",
+          "expr": "sum by (application) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"4..\"}[5m])) / sum by (application) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) * 100",
           "legendFormat": "{{application}} - 4xx %",
           "refId": "B"
         }
@@ -648,7 +648,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application, status) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"[45]..\"}[5m]))",
+          "expr": "sum by (application, status) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"[45]..\"}[5m]))",
           "legendFormat": "{{application}} - {{status}}",
           "refId": "A"
         }
@@ -683,7 +683,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "topk(10, sum by (application, route) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"5..\"}[5m])))",
+          "expr": "topk(10, sum by (application, route) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"5..\"}[5m])))",
           "legendFormat": "{{application}} - {{route}}",
           "refId": "A"
         }
@@ -750,28 +750,28 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "format": "table",
           "instant": true,
           "refId": "RPS"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "histogram_quantile(0.99, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, application) (rate(http_request_duration_seconds_bucket{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", route!~\".*metrics.*|.*health.*\"}[5m])))",
           "format": "table",
           "instant": true,
           "refId": "P99"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"5..\"}[5m])) / sum by (application) (rate(http_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) * 100",
+          "expr": "sum by (application) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", status=~\"5..\"}[5m])) / sum by (application) (rate(http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m])) * 100",
           "format": "table",
           "instant": true,
           "refId": "ERR"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (http_active_connections{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "sum by (application) (http_active_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "format": "table",
           "instant": true,
           "refId": "CONN"
@@ -828,10 +828,25 @@
         "type": "datasource"
       },
       {
+        "allValue": ".+",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(http_requests_total, job)",
+        "includeAll": false,
+        "label": "Job",
+        "multi": false,
+        "name": "job",
+        "options": [],
+        "query": { "qryType": 1, "query": "label_values(http_requests_total, job)", "refId": "job" },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(http_requests_total, team)",
+        "definition": "label_values(http_requests_total{job=~\"$job\"}, team)",
         "includeAll": true,
         "label": "Team",
         "multi": true,

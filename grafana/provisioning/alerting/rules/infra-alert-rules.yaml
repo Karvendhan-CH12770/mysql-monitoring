@@ -65,7 +65,7 @@ groups:
             The server itself may be powered off, experiencing a network failure, or the
             windows_exporter service may have crashed. All hosted services on this server
             are potentially unavailable and require immediate investigation.
-          action_item: >
+          action_item: |
             1. Attempt to ping the server: ping {{ $labels.instance }}.
             2. Try RDP or SSH to the server.
             3. Check if the windows_exporter service is running: Get-Service windows_exporter.
@@ -122,7 +122,7 @@ groups:
             tasks experience severe slowdowns. Possible causes: a runaway process consuming
             all cores, Windows Update running full indexing/compilation tasks, an application
             bug causing an infinite loop, or a crypto-mining malware infection.
-          action_item: >
+          action_item: |
             1. Open Task Manager or run: Get-Process | Sort-Object CPU -Descending | Select-Object -First 10.
             2. Identify the top CPU-consuming process.
             3. If a legitimate service, consider increasing server resources or offloading workload.
@@ -177,7 +177,7 @@ groups:
             CPU utilization on {{ $labels.instance }} is above 80% and rising. The server
             still has some headroom but is under significant load. If unaddressed, this
             may escalate to a critical CPU event impacting all hosted services.
-          action_item: >
+          action_item: |
             1. Check top processes: Get-Process | Sort-Object CPU -Descending | Select-Object -First 5.
             2. Review Windows Event Viewer for application errors.
             3. Monitor trend in the Infrastructure dashboard — plan action if rising.
@@ -230,7 +230,7 @@ groups:
             for all hosted applications. Possible causes: a memory leak in an application,
             a large dataset loaded without bounds, too many concurrent processes, or the
             server is undersized for its current workload.
-          action_item: >
+          action_item: |
             1. Check top memory consumers: Get-Process | Sort-Object WorkingSet -Descending | Select-Object Name, WorkingSet -First 10.
             2. Check for memory leaks (growing WorkingSet over time).
             3. Restart the top memory-consuming service if it has a known leak.
@@ -244,7 +244,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "(1 - (windows_os_physical_memory_free_bytes / windows_cs_physical_memory_bytes)) * 100"
+              expr: "(1 - (windows_memory_physical_free_bytes{job=\"windows_servers\"} / windows_memory_physical_total_bytes{job=\"windows_servers\"})) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -284,7 +284,7 @@ groups:
             Memory utilization on {{ $labels.instance }} is above 80%. The server is under
             memory pressure but still functional. Continued growth will result in pagefile
             usage and performance degradation.
-          action_item: >
+          action_item: |
             1. Review memory trend in the Infrastructure dashboard.
             2. Identify the largest memory consumers: Get-Process | Sort-Object WorkingSet -Descending | Select-Object -First 5.
             3. Check if any scheduled tasks recently started that are memory-intensive.
@@ -295,7 +295,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "(1 - (windows_os_physical_memory_free_bytes / windows_cs_physical_memory_bytes)) * 100"
+              expr: "(1 - (windows_memory_physical_free_bytes{job=\"windows_servers\"} / windows_memory_physical_total_bytes{job=\"windows_servers\"})) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -336,7 +336,7 @@ groups:
             Windows services writing to this volume (IIS logs, application logs, temp files,
             database files) will begin to fail with "Not enough disk space" errors. If the
             OS drive fills completely, the server may become unresponsive or crash.
-          action_item: >
+          action_item: |
             1. Identify large files: Get-ChildItem -Path C:\ -Recurse -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select-Object -First 20 FullName, Length.
             2. Clear Windows temp files: cleanmgr.exe /sagerun:1.
             3. Archive or delete old IIS/application log files.
@@ -350,7 +350,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "(1 - windows_logical_disk_free_bytes{volume!~\"HarddiskVolume.*\"} / windows_logical_disk_size_bytes{volume!~\"HarddiskVolume.*\"}) * 100"
+              expr: "(1 - (windows_logical_disk_free_bytes{job=\"windows_servers\", volume!~\"HarddiskVolume.*|_Total\"} / windows_logical_disk_size_bytes{job=\"windows_servers\", volume!~\"HarddiskVolume.*|_Total\"})) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -390,7 +390,7 @@ groups:
             Disk volume {{ $labels.volume }} on {{ $labels.instance }} is above 80% capacity.
             At current usage, the volume will reach critical levels if log rotation, archival,
             or cleanup is not performed proactively.
-          action_item: >
+          action_item: |
             1. Review disk usage trend in the Infrastructure dashboard.
             2. Run disk cleanup: cleanmgr.exe.
             3. Archive logs older than 30 days.
@@ -402,7 +402,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "(1 - windows_logical_disk_free_bytes{volume!~\"HarddiskVolume.*\"} / windows_logical_disk_size_bytes{volume!~\"HarddiskVolume.*\"}) * 100"
+              expr: "(1 - (windows_logical_disk_free_bytes{job=\"windows_servers\", volume!~\"HarddiskVolume.*|_Total\"} / windows_logical_disk_size_bytes{job=\"windows_servers\", volume!~\"HarddiskVolume.*|_Total\"})) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -452,7 +452,7 @@ groups:
             to Prometheus scrapes. The server may be powered off, experiencing a kernel panic,
             have a network failure, or the node_exporter service may have crashed. All services
             hosted on this server are potentially unavailable.
-          action_item: >
+          action_item: |
             1. Attempt to ping the server: ping {{ $labels.instance }}.
             2. Try SSH access: ssh user@{{ $labels.instance }}.
             3. Check if node_exporter is running: systemctl status node_exporter.
@@ -509,7 +509,7 @@ groups:
             increases application response times dramatically. Possible causes: a runaway
             process or fork bomb, a compilation or CI/CD job consuming all cores, a cron job
             that has gone into an infinite loop, or a DDoS attack causing network packet processing overhead.
-          action_item: >
+          action_item: |
             1. Identify top processes: top -bn1 | head -20 or ps aux --sort=-%cpu | head -15.
             2. Check for zombie or defunct processes: ps aux | grep Z.
             3. Look at system load average: uptime.
@@ -563,7 +563,7 @@ groups:
           root_cause: >
             CPU utilization on {{ $labels.instance }} is above 80%. The server is under
             elevated load but still operational. Monitor for escalation to critical.
-          action_item: >
+          action_item: |
             1. Check top CPU consumers: ps aux --sort=-%cpu | head -10.
             2. Review load average trend in the Infrastructure dashboard.
             3. Evaluate if any batch jobs or scheduled tasks are contributing to the spike.
@@ -616,7 +616,7 @@ groups:
             memory. Applications hosted on this server face risk of being killed. Causes include
             a memory leak in a long-running process, a large in-memory data operation (cache
             load, sort), insufficient swap space, or the server is simply undersized.
-          action_item: >
+          action_item: |
             1. Check memory usage: free -h and cat /proc/meminfo.
             2. Identify top memory consumers: ps aux --sort=-%mem | head -10.
             3. Check OOM killer history: sudo dmesg | grep -i "oom\|killed process".
@@ -669,7 +669,7 @@ groups:
           root_cause: >
             Memory utilization on {{ $labels.instance }} is above 80%. The system is under
             memory pressure. If usage continues to grow, OOM risk increases.
-          action_item: >
+          action_item: |
             1. Review memory trend in the Infrastructure dashboard.
             2. Identify top memory processes: ps aux --sort=-%mem | head -5.
             3. Check if swap is being used: free -h.
@@ -721,7 +721,7 @@ groups:
             Services writing to this filesystem (application logs, database writes, temp files)
             will start failing with "No space left on device" errors. If the root filesystem
             fills up, the server may become unresponsive.
-          action_item: >
+          action_item: |
             1. Check disk usage: df -h {{ $labels.mountpoint }}.
             2. Find large files: sudo du -sh /* 2>/dev/null | sort -rh | head -20.
             3. Clear old logs: sudo find /var/log -name "*.log" -mtime +30 -delete.
@@ -736,7 +736,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "(1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|fuse.lxcfs|squashfs|devtmpfs\",mountpoint!~\"/boot.*\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|fuse.lxcfs|squashfs|devtmpfs\",mountpoint!~\"/boot.*\"}) * 100"
+              expr: "(1 - (node_filesystem_avail_bytes{job=\"linux_servers\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\"} / node_filesystem_size_bytes{job=\"linux_servers\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\"})) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -776,7 +776,7 @@ groups:
             Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is above 80% capacity.
             Proactive cleanup or capacity planning is required to prevent reaching the critical
             threshold.
-          action_item: >
+          action_item: |
             1. Review disk trend in the Infrastructure dashboard.
             2. Check for files to archive or remove: du -sh /var/log/* | sort -rh | head -10.
             3. Set up or verify log rotation is running: logrotate -d /etc/logrotate.conf.
@@ -788,7 +788,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "(1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|fuse.lxcfs|squashfs|devtmpfs\",mountpoint!~\"/boot.*\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|fuse.lxcfs|squashfs|devtmpfs\",mountpoint!~\"/boot.*\"}) * 100"
+              expr: "(1 - (node_filesystem_avail_bytes{job=\"linux_servers\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\"} / node_filesystem_size_bytes{job=\"linux_servers\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\"})) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200

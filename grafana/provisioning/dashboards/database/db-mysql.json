@@ -59,7 +59,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
-          "expr": "count(mysql_up{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} == 1)",
+          "expr": "count(mysql_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} == 1)",
           "range": true,
           "refId": "A"
         }
@@ -99,7 +99,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_queries{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_queries{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -139,7 +139,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(mysql_global_status_threads_connected{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(mysql_global_status_threads_connected{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "refId": "A"
         }
       ],
@@ -179,7 +179,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(mysql_global_status_slow_queries{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[1h]))",
+          "expr": "sum(increase(mysql_global_status_slow_queries{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[1h]))",
           "refId": "A"
         }
       ],
@@ -222,7 +222,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
-          "expr": "avg((mysql_global_status_innodb_buffer_pool_pages_data{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} / mysql_global_status_innodb_buffer_pool_pages_total{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) * 100)",
+          "expr": "avg((mysql_global_status_innodb_buffer_pool_pages_data{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} / mysql_global_status_innodb_buffer_pool_pages_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) * 100)",
           "range": true,
           "refId": "A"
         }
@@ -258,7 +258,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(mysql_global_status_uptime{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "avg(mysql_global_status_uptime{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "refId": "A"
         }
       ],
@@ -303,7 +303,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_queries{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(mysql_global_status_queries{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -341,25 +341,25 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_commands_total{command=\"select\", job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_commands_total{command=\"select\", job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "SELECT",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_commands_total{command=\"insert\", job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_commands_total{command=\"insert\", job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "INSERT",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_commands_total{command=\"update\", job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_commands_total{command=\"update\", job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "UPDATE",
           "refId": "C"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_commands_total{command=\"delete\", job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_commands_total{command=\"delete\", job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "DELETE",
           "refId": "D"
         }
@@ -397,7 +397,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_slow_queries{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(mysql_global_status_slow_queries{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -443,7 +443,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "mysql_global_status_threads_connected{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "mysql_global_status_threads_connected{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -483,7 +483,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "(mysql_global_status_threads_connected{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} / mysql_global_variables_max_connections{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) * 100",
+          "expr": "(mysql_global_status_threads_connected{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} / mysql_global_variables_max_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) * 100",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -521,7 +521,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "mysql_global_status_threads_running{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "mysql_global_status_threads_running{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -559,7 +559,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_aborted_connects{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(mysql_global_status_aborted_connects{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -601,21 +601,21 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "mysql_global_status_threads_connected{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "mysql_global_status_threads_connected{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "format": "table",
           "instant": true,
           "refId": "CONNECTED"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "mysql_global_variables_max_connections{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "mysql_global_variables_max_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "format": "table",
           "instant": true,
           "refId": "MAX"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "100 * (mysql_global_status_threads_connected{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} / mysql_global_variables_max_connections{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "100 * (mysql_global_status_threads_connected{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} / mysql_global_variables_max_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "format": "table",
           "instant": true,
           "refId": "PERCENT"
@@ -693,7 +693,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "100 * (sum by (server_name) (mysql_global_status_buffer_pool_pages{state=\"data\", job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) / sum by (server_name) (mysql_global_status_buffer_pool_pages{state=~\"data|free|misc\", job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}))",
+          "expr": "100 * (sum by (server_name) (mysql_global_status_buffer_pool_pages{state=\"data\", job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) / sum by (server_name) (mysql_global_status_buffer_pool_pages{state=~\"data|free|misc\", job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}))",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -731,7 +731,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_innodb_buffer_pool_read_requests{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(mysql_global_status_innodb_buffer_pool_read_requests{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -771,7 +771,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "(1 - (sum(rate(mysql_global_status_innodb_buffer_pool_reads{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) / sum(rate(mysql_global_status_innodb_buffer_pool_read_requests{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])))) * 100",
+          "expr": "(1 - (sum(rate(mysql_global_status_innodb_buffer_pool_reads{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) / sum(rate(mysql_global_status_innodb_buffer_pool_read_requests{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])))) * 100",
           "legendFormat": "Hit Rate",
           "refId": "A"
         }
@@ -809,13 +809,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_innodb_pages_read{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_innodb_pages_read{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Pages Read",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_innodb_pages_written{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_innodb_pages_written{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Pages Written",
           "refId": "B"
         }
@@ -861,7 +861,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_table_locks_waited{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(mysql_global_status_table_locks_waited{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -899,13 +899,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_table_locks_immediate{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_table_locks_immediate{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Immediate",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_table_locks_waited{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_table_locks_waited{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Waited",
           "refId": "B"
         }
@@ -943,7 +943,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "mysql_slave_status_seconds_behind_master{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "mysql_slave_status_seconds_behind_master{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -981,13 +981,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "mysql_slave_status_slave_io_running{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "mysql_slave_status_slave_io_running{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "IO Running - {{server_name}}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "mysql_slave_status_slave_sql_running{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "mysql_slave_status_slave_sql_running{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "SQL Running - {{server_name}}",
           "refId": "B"
         }
@@ -1033,13 +1033,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_bytes_sent{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_bytes_sent{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Sent",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_bytes_received{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_bytes_received{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Received",
           "refId": "B"
         }
@@ -1077,13 +1077,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_created_tmp_tables{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_created_tmp_tables{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Memory",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_created_tmp_disk_tables{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(mysql_global_status_created_tmp_disk_tables{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Disk",
           "refId": "B"
         }
@@ -1121,7 +1121,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "(sum(rate(mysql_global_status_created_tmp_disk_tables{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) / sum(rate(mysql_global_status_created_tmp_tables{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))) * 100",
+          "expr": "(sum(rate(mysql_global_status_created_tmp_disk_tables{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) / sum(rate(mysql_global_status_created_tmp_tables{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))) * 100",
           "legendFormat": "Disk Tables %",
           "refId": "A"
         }
@@ -1159,7 +1159,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(mysql_global_status_select_scan{job=\"mysql_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(mysql_global_status_select_scan{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -1185,16 +1185,31 @@
         "type": "datasource"
       },
       {
+        "allValue": ".+",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(mysql_up, job)",
+        "includeAll": false,
+        "label": "Job",
+        "multi": false,
+        "name": "job",
+        "options": [],
+        "query": { "qryType": 1, "query": "label_values(mysql_up, job)", "refId": "job" },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(mysql_up, team)",
+        "definition": "label_values(mysql_up{job=~\"$job\"}, team)",
         "includeAll": true,
         "label": "Team",
         "multi": true,
         "name": "team",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(mysql_up, team)", "refId": "team" },
+        "query": { "qryType": 1, "query": "label_values(mysql_up{job=~\"$job\"}, team)", "refId": "team" },
         "refresh": 1,
         "sort": 1,
         "type": "query"
@@ -1203,13 +1218,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(mysql_up{team=~\"$team\"}, environment)",
+        "definition": "label_values(mysql_up{job=~\"$job\", team=~\"$team\"}, environment)",
         "includeAll": true,
         "label": "Environment",
         "multi": true,
         "name": "environment",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(mysql_up{team=~\"$team\"}, environment)", "refId": "environment" },
+        "query": { "qryType": 1, "query": "label_values(mysql_up{job=~\"$job\", team=~\"$team\"}, environment)", "refId": "environment" },
         "refresh": 1,
         "sort": 1,
         "type": "query"
@@ -1218,13 +1233,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(mysql_up{team=~\"$team\", environment=~\"$environment\"}, server_name)",
+        "definition": "label_values(mysql_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, server_name)",
         "includeAll": true,
         "label": "Server Name",
         "multi": true,
         "name": "server_name",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(mysql_up{team=~\"$team\", environment=~\"$environment\"}, server_name)", "refId": "server_name" },
+        "query": { "qryType": 1, "query": "label_values(mysql_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, server_name)", "refId": "server_name" },
         "refresh": 1,
         "sort": 1,
         "type": "query"

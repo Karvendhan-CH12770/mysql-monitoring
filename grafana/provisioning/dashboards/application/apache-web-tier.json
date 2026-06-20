@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Enterprise Apache Web Server monitoring — worker utilization, request throughput, connection stats, and performance metrics",
+  "description": "Enterprise Apache Web Server monitoring ï¿½ worker utilization, request throughput, connection stats, and performance metrics",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -79,7 +79,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
-          "expr": "min(up{job=\"apache_servers\", environment=~\"$environment\", team=~\"$team\", server_name=~\"$server_name\"})",
+          "expr": "min(up{job=~\"$job\", environment=~\"$environment\", team=~\"$team\", server_name=~\"$server_name\"})",
           "legendFormat": "Apache Status",
           "range": true,
           "refId": "A"
@@ -905,7 +905,7 @@
           },
           "mappings": [],
           "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] },
-          "unit": "µs"
+          "unit": "ï¿½s"
         },
         "overrides": []
       },
@@ -956,7 +956,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
-          "expr": "time() - process_start_time_seconds{job=\"apache_servers\", environment=~\"$environment\", team=~\"$team\", server_name=~\"$server_name\"}",
+          "expr": "time() - process_start_time_seconds{job=~\"$job\", environment=~\"$environment\", team=~\"$team\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}}",
           "range": true,
           "refId": "A"
@@ -992,7 +992,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
-          "expr": "avg(time() - process_start_time_seconds{job=\"apache_servers\", environment=~\"$environment\", team=~\"$team\", server_name=~\"$server_name\"})",
+          "expr": "avg(time() - process_start_time_seconds{job=~\"$job\", environment=~\"$environment\", team=~\"$team\", server_name=~\"$server_name\"})",
           "legendFormat": "Average Uptime",
           "range": true,
           "refId": "A"
@@ -1016,7 +1016,7 @@
               { "color": "red", "value": 500 }
             ]
           },
-          "unit": "µs"
+          "unit": "ï¿½s"
         },
         "overrides": []
       },
@@ -1145,16 +1145,31 @@
         "type": "datasource"
       },
       {
+        "allValue": ".+",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(apache_up, job)",
+        "includeAll": false,
+        "label": "Job",
+        "multi": false,
+        "name": "job",
+        "options": [],
+        "query": { "qryType": 1, "query": "label_values(apache_up, job)", "refId": "job" },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(apache_up, team)",
+        "definition": "label_values(apache_up{job=~\"$job\"}, team)",
         "includeAll": true,
         "label": "Team",
         "multi": true,
         "name": "team",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(apache_up, team)", "refId": "team" },
+        "query": { "qryType": 1, "query": "label_values(apache_up{job=~\"$job\"}, team)", "refId": "team" },
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -1164,13 +1179,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(apache_up{team=~\"$team\"}, environment)",
+        "definition": "label_values(apache_up{job=~\"$job\", team=~\"$team\"}, environment)",
         "includeAll": true,
         "label": "Environment",
         "multi": true,
         "name": "environment",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(apache_up{team=~\"$team\"}, environment)", "refId": "environment" },
+        "query": { "qryType": 1, "query": "label_values(apache_up{job=~\"$job\", team=~\"$team\"}, environment)", "refId": "environment" },
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -1180,13 +1195,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(apache_up{team=~\"$team\", environment=~\"$environment\"}, server_name)",
+        "definition": "label_values(apache_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, server_name)",
         "includeAll": true,
         "label": "Server Name",
         "multi": true,
         "name": "server_name",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(apache_up{team=~\"$team\", environment=~\"$environment\"}, server_name)", "refId": "server_name" },
+        "query": { "qryType": 1, "query": "label_values(apache_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, server_name)", "refId": "server_name" },
         "refresh": 1,
         "regex": "",
         "sort": 1,

@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Enterprise Linux/Ubuntu Infrastructure monitoring — CPU, Memory, Disk, Network, System metrics via node_exporter",
+  "description": "Enterprise Linux/Ubuntu Infrastructure monitoring ï¿½ CPU, Memory, Disk, Network, System metrics via node_exporter",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -60,7 +60,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "count(up{job=\"linux_servers\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"} == 1)",
+          "expr": "count(up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"} == 1)",
           "range": true,
           "refId": "A"
         }
@@ -190,7 +190,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(\n  100 - (\n    node_filesystem_avail_bytes{fstype=~\"ext4|xfs|btrfs\", mountpoint=\"/\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"}\n    /\n    node_filesystem_size_bytes{fstype=~\"ext4|xfs|btrfs\", mountpoint=\"/\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"}\n    * 100\n  )\n)",
+          "expr": "avg(\n  100 - (\n    node_filesystem_avail_bytes{fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"}\n    /\n    node_filesystem_size_bytes{fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"}\n    * 100\n  )\n)",
           "refId": "A"
         }
       ],
@@ -788,8 +788,94 @@
       "type": "timeseries"
     },
     {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 70 },
+              { "color": "orange", "value": 85 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 40 },
+      "id": 200,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": true },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "100 - (node_filesystem_avail_bytes{fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"} / node_filesystem_size_bytes{fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"} * 100)",
+          "legendFormat": "{{server_name}} ({{mountpoint}})",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Disk Usage per Mountpoint â€” Current % (Gauge)",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": 0 },
+              { "color": "orange", "value": 5368709120 },
+              { "color": "yellow", "value": 10737418240 },
+              { "color": "green",  "value": 21474836480 }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 },
+      "id": 201,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": true },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "node_filesystem_avail_bytes{fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/boot.*\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\", server_name=~\"$server_name\"}",
+          "legendFormat": "{{server_name}} ({{mountpoint}}) Free",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Free Space per Mountpoint",
+      "type": "gauge"
+    },
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 48 },
       "id": 104,
       "panels": [],
       "title": "Network Activity",
@@ -1041,10 +1127,25 @@
         "type": "datasource"
       },
       {
+        "allValue": ".+",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(node_uname_info, job)",
+        "includeAll": false,
+        "label": "Job",
+        "multi": false,
+        "name": "job",
+        "options": [],
+        "query": { "qryType": 1, "query": "label_values(node_uname_info, job)", "refId": "job" },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(node_uname_info, team)",
+        "definition": "label_values(node_uname_info{job=~\"$job\"}, team)",
         "includeAll": true,
         "label": "Team",
         "multi": true,
@@ -1052,7 +1153,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(node_uname_info, team)",
+          "query": "label_values(node_uname_info{job=~\"$job\"}, team)",
           "refId": "team"
         },
         "refresh": 1,
@@ -1064,7 +1165,7 @@
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(node_uname_info{team=~\"$team\"}, environment)",
+        "definition": "label_values(node_uname_info{job=~\"$job\", team=~\"$team\"}, environment)",
         "includeAll": true,
         "label": "Environment",
         "multi": true,
@@ -1072,7 +1173,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(node_uname_info{team=~\"$team\"}, environment)",
+          "query": "label_values(node_uname_info{job=~\"$job\", team=~\"$team\"}, environment)",
           "refId": "environment"
         },
         "refresh": 1,
@@ -1084,7 +1185,7 @@
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(node_uname_info{team=~\"$team\", environment=~\"$environment\"}, os)",
+        "definition": "label_values(node_uname_info{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, os)",
         "includeAll": true,
         "label": "OS",
         "multi": true,
@@ -1092,7 +1193,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(node_uname_info{team=~\"$team\", environment=~\"$environment\"}, os)",
+          "query": "label_values(node_uname_info{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, os)",
           "refId": "os"
         },
         "refresh": 1,
@@ -1104,7 +1205,7 @@
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(node_uname_info{team=~\"$team\", environment=~\"$environment\", os=~\"$os\"}, server_name)",
+        "definition": "label_values(node_uname_info{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\"}, server_name)",
         "includeAll": true,
         "label": "Server Name",
         "multi": true,
@@ -1112,7 +1213,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(node_uname_info{team=~\"$team\", environment=~\"$environment\", os=~\"$os\"}, server_name)",
+          "query": "label_values(node_uname_info{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", os=~\"$os\"}, server_name)",
           "refId": "server_name"
         },
         "refresh": 1,

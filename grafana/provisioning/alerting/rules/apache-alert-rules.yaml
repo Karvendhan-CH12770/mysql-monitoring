@@ -53,7 +53,7 @@ groups:
             The httpd service has either crashed, been killed by the OS (OOM killer), or a fatal
             configuration error is preventing it from accepting connections. All incoming HTTP
             requests to this server are being dropped or refused.
-          action_item: >
+          action_item: |
             1. SSH to {{ $labels.instance }} and check service status: sudo systemctl status apache2 (or httpd).
             2. Review error logs: sudo tail -100 /var/log/apache2/error.log.
             3. If crashed, restart: sudo systemctl restart apache2.
@@ -109,7 +109,7 @@ groups:
             New connections are being queued or rejected, causing latency spikes and potential
             request failures. Possible causes: a traffic surge, slow upstream dependencies
             (database, cache) blocking workers, or too few MaxRequestWorkers configured.
-          action_item: >
+          action_item: |
             1. Check current worker state: apachectl status or curl http://localhost/server-status.
             2. Identify long-running requests holding workers: look for slow queries or upstream timeouts.
             3. Check Apache configuration: grep -i MaxRequestWorkers /etc/apache2/apache2.conf.
@@ -123,7 +123,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "apache_workers{state=\"busy\"} / (apache_workers{state=\"busy\"} + apache_workers{state=\"idle\"}) * 100"
+              expr: "sum by (instance, team) (apache_workers{state=\"busy\", job=\"apache_servers\"}) / sum by (instance, team) (apache_workers{job=\"apache_servers\"}) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -164,7 +164,7 @@ groups:
             While the server is still handling requests, headroom is limited. If traffic
             continues to grow or upstream latency increases, worker exhaustion (critical)
             could occur within minutes.
-          action_item: >
+          action_item: |
             1. Monitor the worker trend in the Apache dashboard — check if it is rising.
             2. Review current active connections: apachectl status.
             3. Check for slow requests or upstream bottlenecks in error.log.
@@ -176,7 +176,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "apache_workers{state=\"busy\"} / (apache_workers{state=\"busy\"} + apache_workers{state=\"idle\"}) * 100"
+              expr: "sum by (instance, team) (apache_workers{state=\"busy\", job=\"apache_servers\"}) / sum by (instance, team) (apache_workers{job=\"apache_servers\"}) * 100"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -217,7 +217,7 @@ groups:
             With insufficient idle workers, new incoming connections will be queued or dropped.
             This indicates the server is near capacity and a burst in traffic could cause an
             outage. Slow backend responses are the most common cause of worker starvation.
-          action_item: >
+          action_item: |
             1. Immediately check server-status for request queue depth.
             2. Identify and terminate any hung or exceptionally long-running requests.
             3. Check slow query logs on the database to find upstream bottlenecks.
@@ -229,7 +229,7 @@ groups:
             datasourceUid: prometheus-uid
             model:
               datasource: {type: prometheus, uid: prometheus-uid}
-              expr: "apache_workers{state=\"idle\"}"
+              expr: "sum by (instance, team) (apache_workers{state=\"idle\", job=\"apache_servers\"})"
               instant: true
               intervalMs: 1000
               maxDataPoints: 43200
@@ -279,7 +279,7 @@ groups:
             All HTTP/HTTPS traffic to this server is being dropped. This may indicate a
             process crash, out-of-memory kill, failed reload due to configuration error,
             or a network connectivity issue to the exporter endpoint.
-          action_item: >
+          action_item: |
             1. SSH to {{ $labels.instance }} and check: sudo systemctl status nginx.
             2. Review error logs: sudo tail -100 /var/log/nginx/error.log.
             3. Test configuration: sudo nginx -t.
@@ -334,7 +334,7 @@ groups:
             This could indicate a traffic surge, connection leaks (clients not closing connections),
             or slow upstream backend responses causing connections to stay open longer than expected.
             If unchecked, this could lead to worker_connections exhaustion.
-          action_item: >
+          action_item: |
             1. Check current connections: sudo nginx -T | grep worker_connections.
             2. Review access logs for unusual traffic patterns: sudo tail -200 /var/log/nginx/access.log.
             3. Check upstream backend response times in the Nginx dashboard.
@@ -392,7 +392,7 @@ groups:
             is returning 500 errors due to an unhandled exception, the upstream connection pool
             is exhausted causing Nginx to return 502/503, or the upstream response time is
             exceeding the proxy_read_timeout causing 504 Gateway Timeout errors.
-          action_item: >
+          action_item: |
             1. Check Nginx error log: sudo tail -100 /var/log/nginx/error.log.
             2. Check the upstream application logs for exceptions or crashes.
             3. Verify upstream service is running: sudo systemctl status <upstream-service>.

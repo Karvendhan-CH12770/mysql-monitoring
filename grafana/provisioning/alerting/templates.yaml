@@ -2,6 +2,9 @@ apiVersion: 1
 
 templates:
 
+  # ---------------------------------------------------------------------------
+  # team_email — resolves team label to destination email address
+  # ---------------------------------------------------------------------------
   - orgId: 1
     name: team_email
     template: |
@@ -17,54 +20,275 @@ templates:
       {{- end -}}
       {{- end }}
 
+  # ---------------------------------------------------------------------------
+  # alert_subject — email subject line
+  # ---------------------------------------------------------------------------
   - orgId: 1
     name: alert_subject
     template: |
       {{ define "alert_subject" -}}
-      {{- if eq .CommonLabels.severity "critical" -}}[CRITICAL]
-      {{- else if eq .CommonLabels.severity "warning" -}}[WARNING]
+      {{- $status := .Status -}}
+      {{- $sev    := .CommonLabels.severity -}}
+      {{- if eq $status "resolved" -}}[RESOLVED]
+      {{- else if eq $sev "critical" -}}[CRITICAL]
+      {{- else if eq $sev "warning"  -}}[WARNING]
       {{- else -}}[INFO]
-      {{- end }} {{ .CommonLabels.alertname }}{{ if .CommonLabels.team }} | {{ .CommonLabels.team }}{{ end }}
+      {{- end }} {{ .CommonLabels.alertname }}{{ if .CommonLabels.team }} | {{ .CommonLabels.team }}{{ end }}{{ if .CommonLabels.environment }} | {{ .CommonLabels.environment }}{{ end }}
       {{- end }}
 
+  # ---------------------------------------------------------------------------
+  # email.default.html — overrides Grafana built-in email template entirely
+  # This name is recognised by Grafana Unified Alerting and replaces the
+  # default alertmanager email layout (removes the Labels / Annotations table).
+  # ---------------------------------------------------------------------------
   - orgId: 1
-    name: alert_body
+    name: email.default.html
     template: |
-      {{ define "alert_body" -}}
-      {{- $sev := .CommonLabels.severity -}}
-      {{- $alert := index .Alerts 0 -}}
+      {{ define "email.default.html" -}}
+      {{- $sev    := .CommonLabels.severity -}}
+      {{- $status := .Status -}}
+      {{- $alert  := index .Alerts 0 -}}
+      {{- $env    := .CommonLabels.environment -}}
+      {{- $team   := .CommonLabels.team -}}
+      {{- $server := .CommonLabels.server_name -}}
+      {{- $inst   := .CommonLabels.instance -}}
+      {{- $job    := .CommonLabels.job -}}
+
+      {{- $accentColor := "#1e40af" -}}
+      {{- $accentLight := "#dbeafe" -}}
+      {{- $accentDark  := "#1e3a8a" -}}
+      {{- $borderColor := "#3b82f6" -}}
+      {{- $statusLabel := "Info" -}}
+      {{- $statusIcon  := "&#8505;" -}}
+
+      {{- if eq $status "resolved" -}}
+        {{- $accentColor = "#15803d" -}}{{- $accentLight = "#dcfce7" -}}{{- $accentDark = "#14532d" -}}{{- $borderColor = "#22c55e" -}}{{- $statusLabel = "Resolved" -}}{{- $statusIcon = "&#10003;" -}}
+      {{- else if eq $sev "critical" -}}
+        {{- $accentColor = "#b91c1c" -}}{{- $accentLight = "#fee2e2" -}}{{- $accentDark = "#7f1d1d" -}}{{- $borderColor = "#ef4444" -}}{{- $statusLabel = "Critical Alert" -}}{{- $statusIcon = "&#9888;" -}}
+      {{- else if eq $sev "warning" -}}
+        {{- $accentColor = "#b45309" -}}{{- $accentLight = "#fef3c7" -}}{{- $accentDark = "#78350f" -}}{{- $borderColor = "#f59e0b" -}}{{- $statusLabel = "Warning Alert" -}}{{- $statusIcon = "&#9888;" -}}
+      {{- end -}}
+
       <!DOCTYPE html>
-      <html>
-      <head><meta charset="UTF-8"></head>
-      <body style="margin:0;padding:16px;background:#f1f5f9;font-family:Arial,sans-serif;">
-      <div style="max-width:600px;margin:0 auto;">
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <title>{{ .CommonLabels.alertname }}</title>
+      </head>
+      <body style="margin:0;padding:0;background-color:#f0f4f8;font-family:Arial,Helvetica,sans-serif;">
 
-      {{ if eq $sev "critical" }}
-      <div style="background:#991b1b;padding:16px;border-radius:6px 6px 0 0;text-align:center;">
-        <div style="color:#fff;font-size:18px;font-weight:700;">CRITICAL ALERT</div>
-      </div>
-      {{ else if eq $sev "warning" }}
-      <div style="background:#b45309;padding:16px;border-radius:6px 6px 0 0;text-align:center;">
-        <div style="color:#fff;font-size:18px;font-weight:700;">WARNING ALERT</div>
-      </div>
-      {{ else }}
-      <div style="background:#1e40af;padding:16px;border-radius:6px 6px 0 0;text-align:center;">
-        <div style="color:#fff;font-size:18px;font-weight:700;">INFO NOTIFICATION</div>
-      </div>
-      {{ end }}
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f0f4f8">
+        <tr>
+          <td align="center" style="padding:32px 12px;">
 
-      <div style="background:#fff;border:1px solid #e2e8f0;border-top:none;padding:16px;border-radius:0 0 6px 6px;">
-        <p><strong>Alert:</strong> {{ .CommonLabels.alertname }}</p>
-        <p><strong>Severity:</strong> {{ $sev }}</p>
-        <p><strong>Team:</strong> {{ .CommonLabels.team }}</p>
-        <p><strong>Instance:</strong> {{ if .CommonLabels.instance }}{{ .CommonLabels.instance }}{{ else }}N/A{{ end }}</p>
-        <p><strong>Status:</strong> {{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }}</p>
-        <p><strong>Started:</strong> {{ $alert.StartsAt.Format "2006-01-02 15:04:05" }}</p>
-        {{ if .CommonAnnotations.description }}<p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>{{ end }}
-        {{ if $alert.GeneratorURL }}<p><a href="{{ $alert.GeneratorURL }}">View in Grafana</a></p>{{ end }}
-      </div>
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
 
-      </div>
+              <!-- ▌ TOP COLOUR BAR -->
+              <tr>
+                <td height="6" bgcolor="{{ $accentColor }}" style="border-radius:8px 8px 0 0;font-size:0;line-height:0;">&nbsp;</td>
+              </tr>
+
+              <!-- ▌ HEADER -->
+              <tr>
+                <td bgcolor="{{ $accentDark }}" style="padding:20px 28px;background-color:{{ $accentDark }};">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td valign="middle">
+                        <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:{{ $accentLight }};letter-spacing:1.5px;text-transform:uppercase;">CorroHealth Monitoring</p>
+                        <p style="margin:0;font-size:21px;font-weight:700;color:#ffffff;">{{ $statusIcon }}&nbsp;&nbsp;{{ $statusLabel }}</p>
+                      </td>
+                      <td align="right" valign="middle" style="white-space:nowrap;">
+                        <span style="display:inline-block;padding:5px 14px;border-radius:20px;border:1.5px solid {{ $accentLight }};font-size:10px;font-weight:700;color:{{ $accentLight }};letter-spacing:0.8px;text-transform:uppercase;">{{ if $env }}{{ $env }}{{ else }}Production{{ end }}</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- ▌ BODY -->
+              <tr>
+                <td bgcolor="#ffffff" style="padding:28px;background-color:#ffffff;">
+
+                  <!-- ROW 1: Alert Name + Status -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="58%" valign="top" style="padding:14px 16px;background-color:#f8fafc;border-radius:6px;">
+                        <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Alert Name</p>
+                        <p style="margin:0;font-size:16px;font-weight:700;color:#0f172a;word-break:break-word;">{{ .CommonLabels.alertname }}</p>
+                      </td>
+                      <td width="3%">&nbsp;</td>
+                      <td width="39%" valign="top" style="padding:14px 16px;background-color:{{ $accentLight }};border-left:4px solid {{ $borderColor }};border-radius:0 6px 6px 0;">
+                        <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Status</p>
+                        <p style="margin:0;font-size:15px;font-weight:700;color:{{ $accentColor }};">{{ $statusIcon }}&nbsp;{{ if eq $status "resolved" }}Resolved{{ else }}Firing{{ end }}</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="10" style="font-size:0;">&nbsp;</td></tr></table>
+
+                  <!-- ROW 2: Severity | Team | Job -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="32%" valign="top" style="padding:12px 14px;background-color:#f8fafc;border-radius:6px;">
+                        <p style="margin:0 0 3px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Severity</p>
+                        <p style="margin:0;font-size:13px;font-weight:700;color:{{ $accentColor }};">{{ $statusIcon }}&nbsp;{{ if $sev }}{{ $sev | title }}{{ else }}Info{{ end }}</p>
+                      </td>
+                      <td width="2%">&nbsp;</td>
+                      <td width="32%" valign="top" style="padding:12px 14px;background-color:#f8fafc;border-radius:6px;">
+                        <p style="margin:0 0 3px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Team</p>
+                        <p style="margin:0;font-size:13px;font-weight:600;color:#0f172a;word-break:break-word;">{{ if $team }}{{ $team }}{{ else }}—{{ end }}</p>
+                      </td>
+                      <td width="2%">&nbsp;</td>
+                      <td width="32%" valign="top" style="padding:12px 14px;background-color:#f8fafc;border-radius:6px;">
+                        <p style="margin:0 0 3px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Job</p>
+                        <p style="margin:0;font-size:13px;font-weight:600;color:#0f172a;word-break:break-word;">{{ if $job }}{{ $job }}{{ else }}—{{ end }}</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="10" style="font-size:0;">&nbsp;</td></tr></table>
+
+                  <!-- ROW 3: Server | Instance | Fired At -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="32%" valign="top" style="padding:12px 14px;background-color:#f8fafc;border-radius:6px;">
+                        <p style="margin:0 0 3px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Server</p>
+                        <p style="margin:0;font-size:13px;font-weight:600;color:#0f172a;word-break:break-word;">{{ if $server }}{{ $server }}{{ else }}—{{ end }}</p>
+                      </td>
+                      <td width="2%">&nbsp;</td>
+                      <td width="32%" valign="top" style="padding:12px 14px;background-color:#f8fafc;border-radius:6px;">
+                        <p style="margin:0 0 3px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Instance</p>
+                        <p style="margin:0;font-size:12px;font-weight:600;color:#334155;word-break:break-all;">{{ if $inst }}{{ $inst }}{{ else }}—{{ end }}</p>
+                      </td>
+                      <td width="2%">&nbsp;</td>
+                      <td width="32%" valign="top" style="padding:12px 14px;background-color:#fef3c7;border-radius:6px;">
+                        <p style="margin:0 0 3px 0;font-size:10px;font-weight:700;color:#92400e;letter-spacing:1px;text-transform:uppercase;">{{ if eq $status "resolved" }}Resolved At{{ else }}Fired At{{ end }}</p>
+                        <p style="margin:0;font-size:12px;font-weight:700;color:#78350f;">{{ $alert.StartsAt.Format "02 Jan 2006, 15:04 UTC" }}</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- DIVIDER -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="22" style="font-size:0;">&nbsp;</td></tr></table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="1" bgcolor="#e2e8f0" style="font-size:0;line-height:0;">&nbsp;</td></tr></table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="20" style="font-size:0;">&nbsp;</td></tr></table>
+
+                  <!-- SUMMARY -->
+                  {{- if .CommonAnnotations.summary }}
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="padding:14px 18px;background-color:#f8fafc;border-left:4px solid {{ $borderColor }};border-radius:0 6px 6px 0;">
+                        <p style="margin:0 0 5px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Summary</p>
+                        <p style="margin:0;font-size:14px;color:#334155;line-height:1.7;">{{ .CommonAnnotations.summary }}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="12" style="font-size:0;">&nbsp;</td></tr></table>
+                  {{- end }}
+
+                  <!-- DESCRIPTION -->
+                  {{- if .CommonAnnotations.description }}
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="padding:14px 18px;background-color:#f8fafc;border-radius:6px;">
+                        <p style="margin:0 0 5px 0;font-size:10px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;">Description</p>
+                        <p style="margin:0;font-size:14px;color:#334155;line-height:1.7;">{{ .CommonAnnotations.description }}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="12" style="font-size:0;">&nbsp;</td></tr></table>
+                  {{- end }}
+
+                  <!-- ROOT CAUSE -->
+                  {{- if .CommonAnnotations.root_cause }}
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="padding:14px 18px;background-color:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 6px 6px 0;">
+                        <p style="margin:0 0 5px 0;font-size:10px;font-weight:700;color:#92400e;letter-spacing:1px;text-transform:uppercase;">Root Cause</p>
+                        <p style="margin:0;font-size:14px;color:#78350f;line-height:1.7;">{{ .CommonAnnotations.root_cause }}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="12" style="font-size:0;">&nbsp;</td></tr></table>
+                  {{- end }}
+
+                  <!-- ACTION ITEMS -->
+                  {{- if .CommonAnnotations.action_item }}
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="padding:14px 18px;background-color:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 6px 6px 0;">
+                        <p style="margin:0 0 10px 0;font-size:10px;font-weight:700;color:#1e40af;letter-spacing:1px;text-transform:uppercase;">Action Items</p>
+                        <p style="margin:0;font-size:13px;color:#1e3a8a;line-height:2.0;white-space:pre-line;">{{ .CommonAnnotations.action_item }}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="12" style="font-size:0;">&nbsp;</td></tr></table>
+                  {{- end }}
+
+                  <!-- DASHBOARD NAME -->
+                  {{- if .CommonAnnotations.dashboard_name }}
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="padding:10px 14px;background-color:#f8fafc;border-radius:6px;">
+                        <p style="margin:0;font-size:12px;color:#475569;">Dashboard:&nbsp;<strong>{{ .CommonAnnotations.dashboard_name }}</strong></p>
+                      </td>
+                    </tr>
+                  </table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="12" style="font-size:0;">&nbsp;</td></tr></table>
+                  {{- end }}
+
+                  <!-- DIVIDER -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="8" style="font-size:0;">&nbsp;</td></tr></table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="1" bgcolor="#e2e8f0" style="font-size:0;line-height:0;">&nbsp;</td></tr></table>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="20" style="font-size:0;">&nbsp;</td></tr></table>
+
+                  <!-- BUTTONS -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="49%" align="center">
+                        {{- if .CommonAnnotations.dashboard_url }}
+                        <a href="{{ .CommonAnnotations.dashboard_url }}" style="display:block;padding:13px 0;background-color:#0f172a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:700;border-radius:6px;text-align:center;">View Dashboard</a>
+                        {{- else }}
+                        <span style="display:block;padding:13px 0;background-color:#e2e8f0;color:#94a3b8;font-size:13px;font-weight:700;border-radius:6px;text-align:center;">View Dashboard</span>
+                        {{- end }}
+                      </td>
+                      <td width="2%">&nbsp;</td>
+                      <td width="49%" align="center">
+                        {{- if $alert.GeneratorURL }}
+                        <a href="{{ $alert.GeneratorURL }}" style="display:block;padding:13px 0;background-color:{{ $accentColor }};color:#ffffff;text-decoration:none;font-size:13px;font-weight:700;border-radius:6px;text-align:center;">View Alert Rule</a>
+                        {{- else }}
+                        <span style="display:block;padding:13px 0;background-color:#e2e8f0;color:#94a3b8;font-size:13px;font-weight:700;border-radius:6px;text-align:center;">View Alert Rule</span>
+                        {{- end }}
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+
+              <!-- ▌ FOOTER -->
+              <tr>
+                <td bgcolor="#f8fafc" style="padding:14px 28px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;background-color:#f8fafc;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td valign="middle">
+                        <p style="margin:0;font-size:11px;color:#94a3b8;">CorroHealth Monitoring &nbsp;&bull;&nbsp; Auto-generated notification</p>
+                      </td>
+                      <td align="right" valign="middle">
+                        <p style="margin:0;font-size:11px;color:#94a3b8;">{{ $alert.StartsAt.Format "02 Jan 2006, 15:04 UTC" }}</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+
+          </td>
+        </tr>
+      </table>
+
       </body>
       </html>
       {{- end }}

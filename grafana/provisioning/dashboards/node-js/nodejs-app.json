@@ -1,4 +1,4 @@
-{
+ï»¿{
   "annotations": {
     "list": [
       {
@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Enterprise Node.js runtime monitoring — heap memory, event loop lag, garbage collection, active handles, CPU usage, process uptime via prom-client",
+  "description": "Enterprise Node.js runtime monitoring ï¿½ heap memory, event loop lag, garbage collection, active handles, CPU usage, process uptime via prom-client",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -67,7 +67,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "min(up{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "min(up{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "App Status",
           "refId": "A"
         }
@@ -109,7 +109,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_heap_size_used_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_heap_size_used_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "refId": "A"
         }
       ],
@@ -150,7 +150,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_eventloop_lag_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_eventloop_lag_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "refId": "A"
         }
       ],
@@ -191,7 +191,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_active_handles_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_active_handles_total{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "refId": "A"
         }
       ],
@@ -232,7 +232,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_active_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_active_requests_total{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "refId": "A"
         }
       ],
@@ -268,7 +268,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(time() - nodejs_process_start_time_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(time() - nodejs_process_start_time_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "refId": "A"
         }
       ],
@@ -324,19 +324,19 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_heap_size_used_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_heap_size_used_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "Heap Used",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_heap_size_total_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_heap_size_total_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "Heap Total",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_heap_space_size_available_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_heap_space_size_available_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "Heap Available",
           "refId": "C"
         }
@@ -382,7 +382,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_heap_size_used_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}) / avg(nodejs_nodejs_heap_size_total_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}) * 100",
+          "expr": "avg(nodejs_heap_size_used_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}) / avg(nodejs_heap_size_total_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}) * 100",
           "legendFormat": "Heap Usage %",
           "refId": "A"
         }
@@ -418,13 +418,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_nodejs_external_memory_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_external_memory_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "External Memory",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(nodejs_process_resident_memory_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg(nodejs_process_resident_memory_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "Resident Memory (RSS)",
           "refId": "B"
         }
@@ -460,7 +460,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application, space_name) (nodejs_nodejs_heap_space_size_used_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application, space_name) (nodejs_heap_space_size_used_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "{{application}} - {{space_name}}",
           "refId": "A"
         }
@@ -512,7 +512,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_eventloop_lag_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_eventloop_lag_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "{{application}}",
           "refId": "A"
         }
@@ -548,19 +548,19 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_eventloop_lag_p50_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_eventloop_lag_p50_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "{{application}} - p50",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_eventloop_lag_p90_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_eventloop_lag_p90_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "{{application}} - p90",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_eventloop_lag_p99_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_eventloop_lag_p99_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "{{application}} - p99",
           "refId": "C"
         }
@@ -604,7 +604,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application, gc_type) (rate(nodejs_nodejs_gc_duration_seconds_sum{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application, gc_type) (rate(nodejs_gc_duration_seconds_sum{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "{{application}} - {{gc_type}}",
           "refId": "A"
         }
@@ -640,7 +640,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application, gc_type) (rate(nodejs_nodejs_gc_duration_seconds_count{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application, gc_type) (rate(nodejs_gc_duration_seconds_count{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "{{application}} - {{gc_type}}",
           "refId": "A"
         }
@@ -693,13 +693,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (rate(nodejs_process_cpu_user_seconds_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application) (rate(nodejs_process_cpu_user_seconds_total{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "User CPU",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (rate(nodejs_process_cpu_system_seconds_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application) (rate(nodejs_process_cpu_system_seconds_total{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "System CPU",
           "refId": "B"
         }
@@ -735,7 +735,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (application) (rate(nodejs_process_cpu_seconds_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
+          "expr": "sum by (application) (rate(nodejs_process_cpu_seconds_total{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"}[5m]))",
           "legendFormat": "{{application}} - total CPU",
           "refId": "A"
         }
@@ -787,13 +787,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_active_handles_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_active_handles_total{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "Active Handles",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_active_requests_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_active_requests_total{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "Active Requests",
           "refId": "B"
         }
@@ -828,7 +828,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application, type) (nodejs_nodejs_active_handles{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", type=~\".+\"})",
+          "expr": "avg by (application, type) (nodejs_active_handles{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\", type=~\".+\"})",
           "legendFormat": "{{application}} - {{type}}",
           "refId": "A"
         }
@@ -871,7 +871,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (time() - nodejs_process_start_time_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (time() - nodejs_process_start_time_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "legendFormat": "{{application}}",
           "refId": "A"
         }
@@ -925,28 +925,28 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_heap_size_used_bytes{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_heap_size_used_bytes{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "format": "table",
           "instant": true,
           "refId": "HEAP"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_eventloop_lag_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_eventloop_lag_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "format": "table",
           "instant": true,
           "refId": "LAG"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (nodejs_nodejs_active_handles_total{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (nodejs_active_handles_total{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "format": "table",
           "instant": true,
           "refId": "HANDLES"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg by (application) (time() - nodejs_process_start_time_seconds{job=\"nodejs_applications\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
+          "expr": "avg by (application) (time() - nodejs_process_start_time_seconds{job=~\\"$job\\", team=~\"$team\", environment=~\"$environment\", application=~\"$application\"})",
           "format": "table",
           "instant": true,
           "refId": "UPTIME"
@@ -1003,16 +1003,31 @@
         "type": "datasource"
       },
       {
+        "allValue": ".+",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(nodejs_heap_size_used_bytes, job)",
+        "includeAll": false,
+        "label": "Job",
+        "multi": false,
+        "name": "job",
+        "options": [],
+        "query": { "qryType": 1, "query": "label_values(nodejs_heap_size_used_bytes, job)", "refId": "job" },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(nodejs_nodejs_heap_size_used_bytes, team)",
+        "definition": "label_values(nodejs_heap_size_used_bytes{job=~\"$job\"}, team)",
         "includeAll": true,
         "label": "Team",
         "multi": true,
         "name": "team",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(nodejs_nodejs_heap_size_used_bytes, team)", "refId": "team" },
+        "query": { "qryType": 1, "query": "label_values(nodejs_heap_size_used_bytes{job=~\"$job\"}, team)", "refId": "team" },
         "refresh": 1,
         "sort": 1,
         "type": "query"
@@ -1021,13 +1036,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(nodejs_nodejs_heap_size_used_bytes{team=~\"$team\"}, environment)",
+        "definition": "label_values(nodejs_heap_size_used_bytes{job=~\"$job\", team=~\"$team\"}, environment)",
         "includeAll": true,
         "label": "Environment",
         "multi": true,
         "name": "environment",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(nodejs_nodejs_heap_size_used_bytes{team=~\"$team\"}, environment)", "refId": "environment" },
+        "query": { "qryType": 1, "query": "label_values(nodejs_heap_size_used_bytes{job=~\"$job\", team=~\"$team\"}, environment)", "refId": "environment" },
         "refresh": 1,
         "sort": 1,
         "type": "query"
@@ -1036,13 +1051,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(nodejs_nodejs_heap_size_used_bytes{team=~\"$team\", environment=~\"$environment\"}, application)",
+        "definition": "label_values(nodejs_heap_size_used_bytes{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, application)",
         "includeAll": true,
         "label": "Application",
         "multi": true,
         "name": "application",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(nodejs_nodejs_heap_size_used_bytes{team=~\"$team\", environment=~\"$environment\"}, application)", "refId": "application" },
+        "query": { "qryType": 1, "query": "label_values(nodejs_heap_size_used_bytes{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, application)", "refId": "application" },
         "refresh": 1,
         "sort": 1,
         "type": "query"

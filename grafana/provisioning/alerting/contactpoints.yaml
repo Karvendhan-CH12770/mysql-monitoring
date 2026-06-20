@@ -3,8 +3,9 @@ apiVersion: 1
 # =============================================================================
 # Contact Points
 #
-# To add a new team: add a new entry here + add a route in notificationpolicies.yaml
-# addresses = static email address for each team
+# message field is intentionally omitted — Grafana Unified Alerting picks up
+# the "email.default.html" template automatically from templates.yaml and uses
+# it as the full HTML email body.
 # =============================================================================
 
 contactPoints:
@@ -17,7 +18,7 @@ contactPoints:
         type: email
         disableResolveMessage: false
         settings:
-          addresses: zAppDevInternal@corrohealth.com
+          addresses: karvendhan.nagaraj@corrohealth.com
           singleEmail: true
           subject: '{{ template "alert_subject" . }}'
 
@@ -28,7 +29,7 @@ contactPoints:
         type: email
         disableResolveMessage: false
         settings:
-          addresses: zAppDevInternal@corrohealth.com
+          addresses: karvendhan.nagaraj@corrohealth.com
           singleEmail: true
           subject: '{{ template "alert_subject" . }}'
 
@@ -39,7 +40,7 @@ contactPoints:
         type: email
         disableResolveMessage: false
         settings:
-          addresses: zAppDevInternal@corrohealth.com
+          addresses: karvendhan.nagaraj@corrohealth.com
           singleEmail: true
           subject: '{{ template "alert_subject" . }}'
 
@@ -50,7 +51,7 @@ contactPoints:
         type: email
         disableResolveMessage: false
         settings:
-          addresses: zAppDevInternal@corrohealth.com
+          addresses: karvendhan.nagaraj@corrohealth.com
           singleEmail: true
           subject: '{{ template "alert_subject" . }}'
 
@@ -61,7 +62,7 @@ contactPoints:
         type: email
         disableResolveMessage: false
         settings:
-          addresses: zAppDevInternal@corrohealth.com
+          addresses: karvendhan.nagaraj@corrohealth.com
           singleEmail: true
           subject: '{{ template "alert_subject" . }}'
 
@@ -72,7 +73,7 @@ contactPoints:
         type: email
         disableResolveMessage: false
         settings:
-          addresses: zAppDevInternal@corrohealth.com
+          addresses: karvendhan.nagaraj@corrohealth.com
           singleEmail: true
           subject: '{{ template "alert_subject" . }}'
 
@@ -83,6 +84,6 @@ contactPoints:
         type: email
         disableResolveMessage: false
         settings:
-          addresses: zAppDevInternal@corrohealth.com
+          addresses: karvendhan.nagaraj@corrohealth.com
           singleEmail: true
           subject: '{{ template "alert_subject" . }}'

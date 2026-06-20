@@ -1,4 +1,4 @@
-{
+﻿{
   "annotations": {
     "list": [
       {
@@ -27,7 +27,65 @@
   "title": "Alerts & SLA Tracking",
   "uid": "enterprise-alerts-sla",
   "version": 1,
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "current": { "text": "Prometheus", "value": "prometheus-uid" },
+        "includeAll": false,
+        "label": "Data Source",
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": { "text": "linux_servers", "value": "linux_servers" },
+        "hide": 0,
+        "label": "Linux Job",
+        "name": "linux_job",
+        "options": [{ "selected": true, "text": "linux_servers", "value": "linux_servers" }],
+        "query": "linux_servers",
+        "type": "textbox"
+      },
+      {
+        "current": { "text": "windows_servers", "value": "windows_servers" },
+        "hide": 0,
+        "label": "Windows Job",
+        "name": "windows_job",
+        "options": [{ "selected": true, "text": "windows_servers", "value": "windows_servers" }],
+        "query": "windows_servers",
+        "type": "textbox"
+      },
+      {
+        "current": { "text": "apache_servers", "value": "apache_servers" },
+        "hide": 0,
+        "label": "Apache Job",
+        "name": "apache_job",
+        "options": [{ "selected": true, "text": "apache_servers", "value": "apache_servers" }],
+        "query": "apache_servers",
+        "type": "textbox"
+      },
+      {
+        "current": { "text": "nginx_servers", "value": "nginx_servers" },
+        "hide": 0,
+        "label": "Nginx Job",
+        "name": "nginx_job",
+        "options": [{ "selected": true, "text": "nginx_servers", "value": "nginx_servers" }],
+        "query": "nginx_servers",
+        "type": "textbox"
+      },
+      {
+        "current": { "text": "nodejs_applications", "value": "nodejs_applications" },
+        "hide": 0,
+        "label": "Node.js Job",
+        "name": "nodejs_job",
+        "options": [{ "selected": true, "text": "nodejs_applications", "value": "nodejs_applications" }],
+        "query": "nodejs_applications",
+        "type": "textbox"
+      }
+    ]
+  },
 
   "panels": [
 
@@ -267,7 +325,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
-          "expr": "avg_over_time(up{job=\"windows_servers\"}[$__range]) * 100",
+          "expr": "avg_over_time(up{job=~\"$windows_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
           "refId": "A"
@@ -310,7 +368,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
-          "expr": "avg_over_time(up{job=\"linux_servers\"}[$__range]) * 100",
+          "expr": "avg_over_time(up{job=~\"$linux_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
           "refId": "A"
@@ -353,7 +411,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
-          "expr": "avg_over_time(up{job=\"apache_servers\"}[$__range]) * 100",
+          "expr": "avg_over_time(up{job=~\"$apache_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
           "refId": "A"
@@ -396,7 +454,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
-          "expr": "avg_over_time(up{job=\"nginx_servers\"}[$__range]) * 100",
+          "expr": "avg_over_time(up{job=~\"$nginx_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
           "refId": "A"
@@ -482,7 +540,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus-uid" },
-          "expr": "avg_over_time(up{job=\"nodejs_applications\"}[$__range]) * 100",
+          "expr": "avg_over_time(up{job=~\"$nodejs_job\"}[$__range]) * 100",
           "instant": true,
           "legendFormat": "{{server_name}}",
           "refId": "A"

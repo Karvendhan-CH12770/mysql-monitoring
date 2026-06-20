@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Enterprise Nginx reverse proxy monitoring — connections, request throughput, active connections, accepted vs handled, upstream API traffic",
+  "description": "Enterprise Nginx reverse proxy monitoring ï¿½ connections, request throughput, active connections, accepted vs handled, upstream API traffic",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -78,7 +78,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "min(up{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "min(up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Nginx Status",
           "range": true,
           "refId": "A"
@@ -120,7 +120,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "count(up{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} == 1)",
+          "expr": "count(up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} == 1)",
           "refId": "A"
         }
       ],
@@ -160,7 +160,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_active{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_active{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "refId": "A"
         }
       ],
@@ -200,7 +200,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_http_requests_total{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(nginx_http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -240,7 +240,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_waiting{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_waiting{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "refId": "A"
         }
       ],
@@ -276,7 +276,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(time() - process_start_time_seconds{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "avg(time() - process_start_time_seconds{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "refId": "A"
         }
       ],
@@ -319,7 +319,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_http_requests_total{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(nginx_http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Total RPS",
           "refId": "A"
         }
@@ -355,7 +355,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_http_requests_total{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(nginx_http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -396,7 +396,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(nginx_http_requests_total{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[1h]))",
+          "expr": "sum(increase(nginx_http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[1h]))",
           "legendFormat": "Requests/Hour",
           "refId": "A"
         }
@@ -437,7 +437,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(nginx_connections_accepted{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[1h]))",
+          "expr": "sum(increase(nginx_connections_accepted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[1h]))",
           "legendFormat": "Connections/Hour",
           "refId": "A"
         }
@@ -486,19 +486,19 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_connections_accepted{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(nginx_connections_accepted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Accepted",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_connections_handled{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(nginx_connections_handled{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Handled",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_connections_accepted{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) - sum(rate(nginx_connections_handled{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(nginx_connections_accepted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) - sum(rate(nginx_connections_handled{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Dropped",
           "refId": "C"
         }
@@ -560,25 +560,25 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_active{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_active{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Active",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_reading{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_reading{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Reading",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_writing{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_writing{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Writing",
           "refId": "C"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_waiting{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_waiting{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Waiting",
           "refId": "D"
         }
@@ -614,13 +614,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nginx_connections_active{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "nginx_connections_active{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}} - active",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nginx_connections_waiting{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "nginx_connections_waiting{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}} - waiting",
           "refId": "B"
         }
@@ -672,35 +672,35 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nginx_connections_active{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "nginx_connections_active{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "format": "table",
           "instant": true,
           "refId": "ACTIVE"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nginx_connections_reading{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "nginx_connections_reading{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "format": "table",
           "instant": true,
           "refId": "READING"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nginx_connections_writing{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "nginx_connections_writing{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "format": "table",
           "instant": true,
           "refId": "WRITING"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "nginx_connections_waiting{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "nginx_connections_waiting{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "format": "table",
           "instant": true,
           "refId": "WAITING"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "rate(nginx_http_requests_total{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])",
+          "expr": "rate(nginx_http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])",
           "format": "table",
           "instant": true,
           "refId": "RPS"
@@ -777,13 +777,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_connections_accepted{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(nginx_connections_accepted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}} - accepted",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_connections_handled{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(nginx_connections_handled{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}} - handled",
           "refId": "B"
         }
@@ -819,7 +819,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_http_requests_total{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
+          "expr": "sum(rate(nginx_http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) by (server_name)",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -862,7 +862,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "time() - process_start_time_seconds{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "time() - process_start_time_seconds{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -898,13 +898,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_connections_accepted{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(nginx_connections_accepted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Accepted/sec",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(nginx_connections_handled{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(nginx_connections_handled{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Handled/sec",
           "refId": "B"
         }
@@ -946,7 +946,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_accepted{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_accepted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Total Accepted",
           "refId": "A"
         }
@@ -980,7 +980,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_handled{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_handled{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Total Handled",
           "refId": "A"
         }
@@ -1021,7 +1021,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_connections_accepted{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) - sum(nginx_connections_handled{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_connections_accepted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) - sum(nginx_connections_handled{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Total Dropped",
           "refId": "A"
         }
@@ -1055,7 +1055,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(nginx_http_requests_total{job=\"nginx_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum(nginx_http_requests_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "Total Requests",
           "refId": "A"
         }
@@ -1082,16 +1082,31 @@
         "type": "datasource"
       },
       {
+        "allValue": ".+",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(nginx_up, job)",
+        "includeAll": false,
+        "label": "Job",
+        "multi": false,
+        "name": "job",
+        "options": [],
+        "query": { "qryType": 1, "query": "label_values(nginx_up, job)", "refId": "job" },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(nginx_up, team)",
+        "definition": "label_values(nginx_up{job=~\"$job\"}, team)",
         "includeAll": true,
         "label": "Team",
         "multi": true,
         "name": "team",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(nginx_up, team)", "refId": "team" },
+        "query": { "qryType": 1, "query": "label_values(nginx_up{job=~\"$job\"}, team)", "refId": "team" },
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -1101,13 +1116,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(nginx_up{team=~\"$team\"}, environment)",
+        "definition": "label_values(nginx_up{job=~\"$job\", team=~\"$team\"}, environment)",
         "includeAll": true,
         "label": "Environment",
         "multi": true,
         "name": "environment",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(nginx_up{team=~\"$team\"}, environment)", "refId": "environment" },
+        "query": { "qryType": 1, "query": "label_values(nginx_up{job=~\"$job\", team=~\"$team\"}, environment)", "refId": "environment" },
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -1117,13 +1132,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": ["$__all"] },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(nginx_up{team=~\"$team\", environment=~\"$environment\"}, server_name)",
+        "definition": "label_values(nginx_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, server_name)",
         "includeAll": true,
         "label": "Server Name",
         "multi": true,
         "name": "server_name",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(nginx_up{team=~\"$team\", environment=~\"$environment\"}, server_name)", "refId": "server_name" },
+        "query": { "qryType": 1, "query": "label_values(nginx_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, server_name)", "refId": "server_name" },
         "refresh": 1,
         "regex": "",
         "sort": 1,

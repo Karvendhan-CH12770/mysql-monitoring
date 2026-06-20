@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Enterprise PostgreSQL monitoring — connections, query performance, replication, vacuum, locks, cache hit ratio",
+  "description": "Enterprise PostgreSQL monitoring ï¿½ connections, query performance, replication, vacuum, locks, cache hit ratio",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -59,7 +59,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "count(pg_up{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} == 1)",
+          "expr": "count(pg_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"} == 1)",
           "refId": "A"
         }
       ],
@@ -99,7 +99,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(pg_stat_activity_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", state!=\"idle\"})",
+          "expr": "sum(pg_stat_activity_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", state!=\"idle\"})",
           "refId": "A"
         }
       ],
@@ -141,7 +141,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(rate(pg_stat_bgwriter_buffers_clean_total{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]) / (rate(pg_stat_bgwriter_buffers_clean_total{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]) + rate(pg_stat_bgwriter_buffers_alloc_total{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) * 100)",
+          "expr": "avg(rate(pg_stat_bgwriter_buffers_clean_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]) / (rate(pg_stat_bgwriter_buffers_clean_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]) + rate(pg_stat_bgwriter_buffers_alloc_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) * 100)",
           "refId": "A"
         }
       ],
@@ -181,7 +181,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(pg_locks_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", mode=\"ExclusiveLock\"})",
+          "expr": "sum(pg_locks_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", mode=\"ExclusiveLock\"})",
           "refId": "A"
         }
       ],
@@ -220,7 +220,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(increase(pg_stat_database_deadlocks{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[1h]))",
+          "expr": "sum(increase(pg_stat_database_deadlocks{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[1h]))",
           "refId": "A"
         }
       ],
@@ -255,7 +255,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "avg(pg_static{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "avg(pg_static{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "refId": "A"
         }
       ],
@@ -298,19 +298,19 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "pg_stat_activity_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", state=\"active\"}",
+          "expr": "pg_stat_activity_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", state=\"active\"}",
           "legendFormat": "{{server_name}} - active",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "pg_stat_activity_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", state=\"idle\"}",
+          "expr": "pg_stat_activity_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", state=\"idle\"}",
           "legendFormat": "{{server_name}} - idle",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "pg_stat_activity_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", state=\"idle in transaction\"}",
+          "expr": "pg_stat_activity_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", state=\"idle in transaction\"}",
           "legendFormat": "{{server_name}} - idle in tx",
           "refId": "C"
         }
@@ -356,7 +356,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (pg_stat_activity_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) / sum by (server_name) (pg_settings_max_connections{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) * 100",
+          "expr": "sum by (server_name) (pg_stat_activity_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) / sum by (server_name) (pg_settings_max_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) * 100",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -404,21 +404,21 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (pg_stat_activity_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum by (server_name) (pg_stat_activity_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "format": "table",
           "instant": true,
           "refId": "ACTIVE"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (pg_settings_max_connections{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum by (server_name) (pg_settings_max_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "format": "table",
           "instant": true,
           "refId": "MAX"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (pg_stat_activity_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) / sum by (server_name) (pg_settings_max_connections{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) * 100",
+          "expr": "sum by (server_name) (pg_stat_activity_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) / sum by (server_name) (pg_settings_max_connections{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}) * 100",
           "format": "table",
           "instant": true,
           "refId": "PERCENT"
@@ -491,13 +491,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_xact_commit{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_xact_commit{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - commits",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_xact_rollback{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_xact_rollback{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - rollbacks",
           "refId": "B"
         }
@@ -533,25 +533,25 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_tup_fetched{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_tup_fetched{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - fetched",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_tup_inserted{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_tup_inserted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - inserted",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_tup_updated{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_tup_updated{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - updated",
           "refId": "C"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_tup_deleted{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_tup_deleted{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - deleted",
           "refId": "D"
         }
@@ -605,7 +605,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_blks_hit{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) / (sum by (server_name) (rate(pg_stat_database_blks_hit{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) + sum by (server_name) (rate(pg_stat_database_blks_read{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))) * 100",
+          "expr": "sum by (server_name) (rate(pg_stat_database_blks_hit{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) / (sum by (server_name) (rate(pg_stat_database_blks_hit{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) + sum by (server_name) (rate(pg_stat_database_blks_read{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))) * 100",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -650,18 +650,18 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(pg_stat_database_blks_hit{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(pg_stat_database_blks_hit{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Cache Hits",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(pg_stat_database_blks_read{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(pg_stat_database_blks_read{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Disk Reads",
           "refId": "B"
         }
       ],
-      "title": "Buffer Pool — Cache Hits vs Disk Reads",
+      "title": "Buffer Pool ï¿½ Cache Hits vs Disk Reads",
       "type": "timeseries"
     },
     {
@@ -699,7 +699,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name, mode) (pg_locks_count{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum by (server_name, mode) (pg_locks_count{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "legendFormat": "{{server_name}} - {{mode}}",
           "refId": "A"
         }
@@ -734,7 +734,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_deadlocks{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_deadlocks{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}}",
           "refId": "A"
         }
@@ -777,13 +777,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_bgwriter_checkpoints_timed_total{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_bgwriter_checkpoints_timed_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - timed checkpoints",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_bgwriter_checkpoints_req_total{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_bgwriter_checkpoints_req_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - requested checkpoints",
           "refId": "B"
         }
@@ -818,13 +818,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_temp_bytes{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_temp_bytes{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - temp bytes/sec",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_temp_files{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum by (server_name) (rate(pg_stat_database_temp_files{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "{{server_name}} - temp files/sec",
           "refId": "B"
         }
@@ -868,7 +868,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "pg_replication_slots_pg_wal_lsn_diff{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "pg_replication_slots_pg_wal_lsn_diff{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}} - {{slot_name}}",
           "refId": "A"
         }
@@ -903,7 +903,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "pg_stat_replication_pg_wal_lsn_diff{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "pg_stat_replication_pg_wal_lsn_diff{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "legendFormat": "{{server_name}} - {{application_name}}",
           "refId": "A"
         }
@@ -946,7 +946,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "pg_database_size_bytes{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", datname=~\"$database\"}",
+          "expr": "pg_database_size_bytes{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\", datname=~\"$database\"}",
           "legendFormat": "{{server_name}} - {{datname}}",
           "refId": "A"
         }
@@ -991,19 +991,19 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(pg_stat_bgwriter_buffers_backend_total{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(pg_stat_bgwriter_buffers_backend_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Blocks Written (backend)",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(pg_stat_bgwriter_buffers_clean_total{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(pg_stat_bgwriter_buffers_clean_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Blocks Written (bgwriter)",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(rate(pg_stat_bgwriter_buffers_checkpoint_total{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
+          "expr": "sum(rate(pg_stat_bgwriter_buffers_checkpoint_total{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))",
           "legendFormat": "Blocks Written (checkpoint)",
           "refId": "C"
         }
@@ -1055,21 +1055,21 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "time() - pg_postmaster_start_time_seconds{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
+          "expr": "time() - pg_postmaster_start_time_seconds{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}",
           "format": "table",
           "instant": true,
           "refId": "UPTIME"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (pg_database_size_bytes{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
+          "expr": "sum by (server_name) (pg_database_size_bytes{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"})",
           "format": "table",
           "instant": true,
           "refId": "SIZE"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (server_name) (rate(pg_stat_database_blks_hit{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) / (sum by (server_name) (rate(pg_stat_database_blks_hit{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) + sum by (server_name) (rate(pg_stat_database_blks_read{job=\"postgres_servers\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))) * 100",
+          "expr": "sum by (server_name) (rate(pg_stat_database_blks_hit{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) / (sum by (server_name) (rate(pg_stat_database_blks_hit{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m])) + sum by (server_name) (rate(pg_stat_database_blks_read{job=~\"$job\", team=~\"$team\", environment=~\"$environment\", server_name=~\"$server_name\"}[5m]))) * 100",
           "format": "table",
           "instant": true,
           "refId": "CACHE"
@@ -1124,16 +1124,31 @@
         "type": "datasource"
       },
       {
+        "allValue": ".+",
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(pg_up, job)",
+        "includeAll": false,
+        "label": "Job",
+        "multi": false,
+        "name": "job",
+        "options": [],
+        "query": { "qryType": 1, "query": "label_values(pg_up, job)", "refId": "job" },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(pg_up, team)",
+        "definition": "label_values(pg_up{job=~\"$job\"}, team)",
         "includeAll": true,
         "label": "Team",
         "multi": true,
         "name": "team",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(pg_up, team)", "refId": "team" },
+        "query": { "qryType": 1, "query": "label_values(pg_up{job=~\"$job\"}, team)", "refId": "team" },
         "refresh": 1,
         "sort": 1,
         "type": "query"
@@ -1142,13 +1157,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(pg_up{team=~\"$team\"}, environment)",
+        "definition": "label_values(pg_up{job=~\"$job\", team=~\"$team\"}, environment)",
         "includeAll": true,
         "label": "Environment",
         "multi": true,
         "name": "environment",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(pg_up{team=~\"$team\"}, environment)", "refId": "environment" },
+        "query": { "qryType": 1, "query": "label_values(pg_up{job=~\"$job\", team=~\"$team\"}, environment)", "refId": "environment" },
         "refresh": 1,
         "sort": 1,
         "type": "query"
@@ -1157,13 +1172,13 @@
         "allValue": ".*",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(pg_up{team=~\"$team\", environment=~\"$environment\"}, server_name)",
+        "definition": "label_values(pg_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, server_name)",
         "includeAll": true,
         "label": "Server Name",
         "multi": true,
         "name": "server_name",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(pg_up{team=~\"$team\", environment=~\"$environment\"}, server_name)", "refId": "server_name" },
+        "query": { "qryType": 1, "query": "label_values(pg_up{job=~\"$job\", team=~\"$team\", environment=~\"$environment\"}, server_name)", "refId": "server_name" },
         "refresh": 1,
         "sort": 1,
         "type": "query"
